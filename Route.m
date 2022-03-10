@@ -37,7 +37,7 @@ classdef Route
             obj.locations = [inFirstLocation, inSecondLocation];
 
             % Save the name
-            obj.name = inFirstLocation.name + "-" + inSecondLocation.name;
+            obj.name = inFirstLocation.string() + "-" + inSecondLocation.string();
    
             % Save the color
             colorType = string(class(inColor));

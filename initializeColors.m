@@ -12,29 +12,19 @@ if ~exist('INITIALIZE_COLORS_M', 'var')
     % seemed to be too verbose, so I removed the COLOR_ prefix.
     
     % For train card colors, train peice colors and player colors
-    PURPLE = Color("purple", "Purple", "PURPLE");
-    BLUE = Color("blue", "Blue", "BLUE");
-    ORANGE = Color("orange", "Orange", "ORANGE");
-    WHITE = Color("white", "White", "WHITE");
-    GREEN = Color("green", "Green", "GREEN");
-    YELLOW = Color("yellow", "Yellow", "YELLOW");
-    BLACK = Color("black", "Black", "BLACK");
-    RED = Color("red", "Red", "RED");
+    PURPLE = Color.purple;
+    BLUE = Color.blue;
+    ORANGE = Color.orange;
+    WHITE = Color.white;
+    GREEN = Color.green;
+    YELLOW = Color.yellow;
+    BLACK = Color.black;
+    RED = Color.red;
     
     % For colorless spots in routes on the game board
-    UNCOLORED = Color("uncolored", "Uncolored", "UNCOLORED", ...
-                      "blank", "Blank", "BLANK", ...
-                      "empty", "Empty", "EMPTY", ...
-                      "null", "Null", "NULL", ...
-                      "colorless", "Colorless", "COLORLESS", ...
-                      "grey", "Grey", "GREY", ...
-                      "neutral", "Neutral", "NEUTRAL");
+    GRAY = Color.gray;
     
     % For the locomotive card
-    RAINBOW = Color("rainbow", "Rainbow", "RAINBOW", ...
-                    "multi", "Multi", "MULTI", ...
-                    "locomotive", "Locomotive", "LOCOMOTIVE", ...
-                    "multicolor", "Multicolor", "MULTICOLOR", ...
-                    "multicolored", "Multicolored", "MULTICOLORED");
+    MULTICOLORED = Color.multicolored;
 
 end

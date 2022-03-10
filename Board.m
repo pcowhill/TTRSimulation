@@ -7,9 +7,9 @@ classdef Board
     % state of the board.
     
     properties (SetAccess = private)
-        locationsMap
-        routesMap
-        ownershipMap
+        locationsMap % Map from location name ('Atlanta') to location object (Location.Atlanta) that contains all locations on the board
+        routesMap    % Map from route id (1) to route object (ATLANTA_TO_CHARLESTON) that contains every route on the board
+        ownershipMap % Map from route id (1) to color object (GREEN) which is the color of the owner of the route.  Unowned routes are not contained in this map.
     end
     
     methods
@@ -43,8 +43,8 @@ classdef Board
                 % Extract the Locations from the route
                 for location = varargin{iArg}.locations
                     % Check if the location is already in the locations map
-                    if ~isKey(obj.locationsMap, char(location.name))
-                        obj.locationsMap(char(location.name)) = location;
+                    if ~isKey(obj.locationsMap, char(location.string()))
+                        obj.locationsMap(char(location.string())) = location;
                     end
                 end
             end
