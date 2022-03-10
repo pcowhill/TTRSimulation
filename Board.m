@@ -84,13 +84,12 @@ classdef Board
                 "The given route ID is '" + string(route.id) + "' and the " + ...
                 "given route's name is '" + route.name + "'.")
 
-            % Return the color of the owner or uncolored if there is no
-            % owner
+            % Return the color of the owner or gray if there is no owner
             if isKey(obj.ownershipMap, route.id)
                 color = obj.ownershipMap(route.id);
                 return
             else
-                color = Color("uncolored");
+                color = Color.gray;
             end
         end
 
@@ -118,6 +117,12 @@ classdef Board
 
             % Set the current owner of the route to the player color
             obj.ownershipMap(route.id) = color;
+        end
+
+        function obj = resetRouteOwners(obj)
+            % resetRouteOwners method
+            % Resets the ownership map
+            obj.ownershipMap = containers.Map('KeyType','double','ValueType','any');
         end
     end
 end

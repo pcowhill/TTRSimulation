@@ -53,7 +53,15 @@ classdef Route
         end
 
         function isSame = isColor(obj,inColor)
+            % isColor
+            % Check that a given color is the same color as the route.
             isSame = obj.color.isColor(inColor);
+        end
+
+        function tf = eq(routeA, routeB)
+            % eq
+            % Override == by checking if the id's are the same
+            
         end
     end
 end
