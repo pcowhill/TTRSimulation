@@ -29,7 +29,7 @@ classdef BoardTest < matlab.unittest.TestCase
             initializeColors;
 
             % Reset the ownership map
-            obj.theBoard = obj.theBoard.resetRouteOwners();
+            obj.theBoard.resetRouteOwners();
 
             % Check that no routes are owned
             obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)
@@ -43,7 +43,7 @@ classdef BoardTest < matlab.unittest.TestCase
             obj.verifyTrue(3 == obj.theBoard.ownershipMap.Count)
 
             % Reset the ownership map
-            obj.theBoard = obj.theBoard.resetRouteOwners();
+            obj.theBoard.resetRouteOwners();
 
             % Check that no routes are owned
             obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)

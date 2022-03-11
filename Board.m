@@ -122,7 +122,7 @@ classdef Board
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
             % Resets the ownership map
-            obj.ownershipMap = containers.Map('KeyType','double','ValueType','any');
+            obj.ownershipMap.remove(obj.ownershipMap.keys());
         end
     end
 end
