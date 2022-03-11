@@ -38,8 +38,8 @@ classdef DestinationTicketCard
 
             % Assign properties to DestinationTicketCard object
             obj.firstLocation = inFirstLocation;  % first Location on destination car   
-            obj.secondLocation = inSecondLocation;  % first Location on destination car   
-            obj.pointValue = inPoints;  % first Location on destination car   
+            obj.secondLocation = inSecondLocation;  % second Location on destination car   
+            obj.pointValue = inPoints;  % points a destination card is worth
         end
     end
 end
