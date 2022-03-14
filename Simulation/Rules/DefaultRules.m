@@ -13,6 +13,16 @@ classdef DefaultRules < Rules
 
         function [claimableRoutes, drawableCards, drawDestinationCards] = ...
                 getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations)
+            arguments
+                rules Rules
+                player Player
+                board Board
+                trainsDeck TrainsDeck
+                destinationsDeck DestinationsDeck
+                routesClaimed Route
+                cardsDrawn TrainCard
+                drawnDestinations DestinationTicketCard
+            end
             if ~isempty(routesClaimed) || length(cardsDrawn) > 1 || drawnDestinations
                 % if the player has drawn two cards, claimed a route or
                 % drawn destination cards, their turn is over and they have
@@ -77,6 +87,7 @@ classdef DefaultRules < Rules
                     % if a player has two or less trains remaining,
                     % everyone gets one more turn before the game is over
                     if rules.turnsRemaining == -1
+                        % -1 means the ending hasn't been triggered already
                         rules.turnsRemaining = length(players);
                     else
                         rules.turnsRemaining = rules.turnsRemaining - 1;
