@@ -45,7 +45,7 @@ classdef DefaultRules < Rules
 
                     % Can only draw a card as second action
                     claimableRoutes = [];
-                    drawDestinationCards = [];
+                    drawDestinationCards = 0;
                 else
                     if destinationsDeck.getCardsLeft() > 0
                         drawDestinationCards = 1;                
