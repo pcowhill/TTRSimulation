@@ -3,7 +3,7 @@ classdef DefaultRules < Rules
     %   Implements the default rules for the TTR base game
 
     properties (SetAccess = private)
-        turnsRemaining = -1
+        turnsRemaining = -1 %-1 means the end has not been triggered
     end
 
     methods
@@ -21,12 +21,10 @@ classdef DefaultRules < Rules
                 drawableCards = [];
                 drawDestinationCards = 0;
             else
-                claimableRoutes = rules.getClaimableRoutes(player, board);
                 drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
-
-                %Don't allow the player to draw a locomotive as their
-                %second card
                 if ~isempty(cardsDrawn)
+                    %Don't allow the player to draw a locomotive as their
+                    %second card
                     indicesToRemove = [];
                     for cardIndex = 1:length(drawableCards)
                         if drawableCards(cardIndex).color == Color.multicolored
@@ -34,11 +32,18 @@ classdef DefaultRules < Rules
                         end
                     end
                     drawableCards(indicesToRemove) = [];
+
+                    % Can only draw a card as second action
+                    claimableRoutes = [];
+                    drawDestinationCards = [];
+                else
+                    if destinationsDeck.getCardsLeft() > 0
+                        drawDestinationCards = 1;                
+                    end
+                    claimableRoutes = rules.getClaimableRoutes(player, board);
                 end
 
-                if destinationsDeck.getCardsLeft() > 0
-                    drawDestinationCards = 1;
-                end
+                
             end
         end
 

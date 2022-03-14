@@ -112,10 +112,22 @@ classdef Player < handle
            indicesToDiscard = [];
            index = 1;
            % find the cards in the player hand to discard
-           while length(indicesToDiscard) < route.length
+           while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand)
                if player.trainCardsHand(index).color == route.color
                    indicesToDiscard = [indicesToDiscard index];
                    trainsDeck.discard(player.trainCardsHand(index));
+               end
+               index = index+1;
+           end
+           if length(indicesToDiscard) < route.length
+               index = 1;
+               % use locomotives for remaining cards
+               while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand)
+                   if player.trainCardsHand(index).color == Color.multicolored
+                       indicesToDiscard = [indicesToDiscard index];
+                       trainsDeck.discard(player.trainCardsHand(index));
+                   end
+                   index = index+1;
                end
            end
            player.trainCardsHand(indicesToDiscard) = [];
@@ -128,12 +140,12 @@ classdef Player < handle
 
         function drawDestinations(player, destinationsDeck)
             cards = destinationsDeck.draw(3);
-            chosenCards = player.chooseDestinationCards(cards);
-            if isempty(chosenCards)
-                chosenCards = 1;
+            chosenCardsIndices = player.chooseDestinationCards(cards);
+            if isempty(chosenCardsIndices)
+                chosenCardsIndices = 1;
             end
-            player.destinationCardsHand.append(cards(chosenCards));
-            cards(chosenCards) = [];
+            player.destinationCardsHand.append(cards(chosenCardsIndices));
+            cards(chosenCardsIndices) = [];
             destinationsDeck.returnCards(cards);
         end
     end

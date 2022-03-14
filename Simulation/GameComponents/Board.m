@@ -1,4 +1,4 @@
-classdef Board < Handle
+classdef Board < handle
     % Board
     % Represents the game board. There should be a single instance of this
     % class (for a single game), and it will keep track of the ownership of
