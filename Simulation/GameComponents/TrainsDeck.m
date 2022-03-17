@@ -21,7 +21,7 @@ classdef TrainsDeck < handle
         function obj = TrainsDeck(varargin)
             % A variable number of arguments may be accepted in order to
             % allow implementers the flexibility to build a custom
-            % TrainsDeck. The easiest way to build a standard would be
+            % TrainsDeck. The easiest way to build a standard deck would be
             % to specify the number of each type of card in a predefined
             % order: purple, white, blue, yellow, orange, black, red,
             % green, and multicolored, which will occur if given 9 
@@ -41,7 +41,7 @@ classdef TrainsDeck < handle
             % Construct an array of Card objects using 9 arguments
  
             % Preallocate the deck and keep track of where cards have been added
-            obj.drawPile = zeros(int8(initNumOfCards));
+            obj.allCards = zeros(int8(initNumOfCards));
             currentPosition = 1;
 
             currentPosition = addCardsToDeck(obj, purple, varargin{1}, currentPosition);
@@ -95,7 +95,7 @@ classdef TrainsDeck < handle
                 end
                 
                 % Preallocate the deck and keep track of where cards have been added
-                obj.drawPile = zeros(int8(initNumOfCards));
+                obj.allCards = zeros(int8(initNumOfCards));
                 currentPosition = 1;
                 
                 for i = 1:nargin-1
@@ -249,10 +249,10 @@ classdef TrainsDeck < handle
 
              c = TrainCard(inColor);
     
-             % Add n card objects of color inColor to the drawPile, which will
-             % act as our starting deck before shuffling, dealing to players,
-             % and setting up face-up cards
-             obj.drawPile(currentPosition:currentPosition + n-1) = c;
+             % Add n card objects of color inColor to the allCards array, which will 
+             % consist of all cards used in the game (these shall eventually be used 
+             % in drawPile, discardPile, and faceUpCards).
+             obj.allCards(currentPosition:currentPosition + n-1) = c;
         
              % This index is to keep track of the next spot in
              % the preallocated array where we need to put the next
