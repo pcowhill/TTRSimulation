@@ -5,17 +5,17 @@ classdef TrainCard
 % claim routes of any color.
 
     properties (SetAccess = immutable)
-        color % the Color of the train card
+        color Color % the Color of the train card
     end
+
     methods
         function obj = TrainCard(inColor)
             % TrainCard Constructor
             % Creates a TrainCard object and sets its color
-
-            % Check that for exactly one argument that is a member of the Color enumeration class
-            assert(and(nargin == 1, string(class(inFirstLocation)) == "Color"),  "The TrainCard constructor must have exactly " + ...
-                "one input argument that is a member of the Color enumeration class.")
-            
+            arguments
+                inColor Color
+            end
+    
             % Assign the color
             obj.color = inColor;            
         end
