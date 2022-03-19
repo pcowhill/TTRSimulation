@@ -7,20 +7,17 @@ classdef Board < handle
     % state of the board.
     
     properties (SetAccess = private)
-        locationsMap % Map from location name ('Atlanta') to location object (Location.Atlanta) that contains all locations on the board
-        routesMap    % Map from route id (1) to route object (ATLANTA_TO_CHARLESTON) that contains every route on the board
-        ownershipMap % Map from route id (1) to color object (GREEN) which is the color of the owner of the route.  Unowned routes are not contained in this map.
+        initialRoutes Route % An array containing all of the route objects passed to the constructor
+        routeGraph          % MATLAB undirected multigraph object containing dynamic information about the routes
     end
     
     methods
         function obj = Board(varargin)
             % Board Constructor
-            % Creates a Board object from the list of Route objects.
-            
-            % Initialize the maps
-            obj.routesMap = containers.Map('KeyType','double','ValueType','any');
-            obj.locationsMap = containers.Map('KeyType','char','ValueType','any');
-            obj.ownershipMap = containers.Map('KeyType','double','ValueType','any');
+            % Creates a Board object from the list of Route objects passed
+            % to it.
+
+            obj.initialRoutes = [varargin{:}];
 
             for iArg = 1:nargin
 
@@ -30,28 +27,49 @@ classdef Board < handle
                     string(class(varargin{iArg})) + "' type was given.")
                 
                 % Ensure the route id does not match any existing route
-                if isKey(obj.routesMap,varargin{iArg}.id)
+                if 1 < sum(obj.initialRoutes == varargin{iArg})
                     error("The Route ID '" + string(varargin{iArg}.id) + "' " + ...
                     "is shared by more than one route sent to Board. " + ...
                     "The two routes are '" + varargin{iArg}.name + ...
-                    "' and '" + obj.routesMap(varargin{iArg}.id).name + "'.")
+                    "' and '" + obj.initialRoutes(varargin{iArg}.id).name + "'.")
+                end
+
+            end
+
+            % Initialize route Graph
+            obj.routeGraph = obj.initializeRouteGraph();
+
+        end
+
+        function routeGraph = initializeRouteGraph(obj)
+            % initializeRouteGraph method
+            % creates and then returns a MATLAB undirected multigraph that
+            % represents the cities and routes/connections between them
+            % while also tracking information such as route owners and
+            % length.
+            routeGraph = graph;
+
+            for route = obj.initialRoutes
+                try % This fails if the location is already in the graph
+                    routeGraph = routeGraph.addnode(route.locations(1).string());
+                end
+                try % This fails if the location is already in the graph
+                    routeGraph = routeGraph.addnode(route.locations(2).string());
                 end
                 
-                % Add the new route to the routesMap
-                obj.routesMap(varargin{iArg}.id) = varargin{iArg};
-
-                % Extract the Locations from the route
-                for location = varargin{iArg}.locations
-                    % Check if the location is already in the locations map
-                    if ~isKey(obj.locationsMap, char(location.string()))
-                        obj.locationsMap(char(location.string())) = location;
-                    end
-                end
+                aTable = table(route.id, route.length, Color.gray);
+                aTable.Properties.VariableNames = {'id', 'Length', 'Owner'};
+                routeGraph = routeGraph.addedge( ...
+                    route.locations(1).string(), ...
+                    route.locations(2).string(), ...
+                    aTable);
             end
         end
 
         function init(board)
-            board.resetRouteOwners();
+            % init method
+            % Sets up the existing Board object for a new game.
+            board.routeGraph = board.initializeRouteGraph();
         end
 
         function tf = isOwned(obj, route)
@@ -67,7 +85,10 @@ classdef Board < handle
                 "requires an argument of type 'Route'. '" + ...
                 string(class(route)) + "' was given.")
 
-            tf = isKey(obj.ownershipMap, route.id);
+            % Return if it is owned
+            edgeIndex = find(obj.routeGraph.Edges.('id') == route.id);
+            
+            tf = ~(Color.gray == obj.routeGraph.Edges.('Owner')(edgeIndex)); %#ok<FNDSB> 
         end
 
         function color = owner(obj, route)
@@ -83,18 +104,16 @@ classdef Board < handle
                 string(class(route)) + "' was given.")
 
             % Ensure the route exists in the routeMap
-            assert(isKey(obj.routesMap, route.id), "The ID of the given " + ...
+            assert(any(obj.initialRoutes == route), "The ID of the given " + ...
                 "route does not match with any existing route on the board. " + ...
                 "The given route ID is '" + string(route.id) + "' and the " + ...
                 "given route's name is '" + route.name + "'.")
 
             % Return the color of the owner or gray if there is no owner
-            if isKey(obj.ownershipMap, route.id)
-                color = obj.ownershipMap(route.id);
-                return
-            else
-                color = Color.gray;
-            end
+            edgeIndex = find(obj.routeGraph.Edges.('id') == route.id);
+
+            color = obj.routeGraph.Edges.('Owner')(edgeIndex); %#ok<FNDSB> 
+            
         end
 
         function claim(obj, route, color)
@@ -120,21 +139,29 @@ classdef Board < handle
                 string(class(route)) + "' was given.")
 
             % Set the current owner of the route to the player color
-            obj.ownershipMap(route.id) = color;
+            edgeIndex = find(obj.routeGraph.Edges.('id') == route.id);
+
+            obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB> 
         end
 
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
             % Resets the ownership map
-            obj.ownershipMap.remove(obj.ownershipMap.keys());
+            obj.routeGraph = obj.initializeRouteGraph();
         end
 
         function numTrains = getNumOfTrains(board, color)
             %getNumOfTrains Get the number of trains on the board of the
             %given color
 
-            %TODO
+            numTrains = 0;
 
+            numRoutes = length(board.initialRoutes);
+            for iRoute = 1:numRoutes
+                if board.routeGraph.Edges.('Owner')(iRoute) == color
+                    numTrains = numTrains + board.routeGraph.Edges.('Length')(iRoute);
+                end
+            end
         end
     end
 end
