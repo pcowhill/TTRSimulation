@@ -167,7 +167,6 @@ classdef TrainsDeck < handle
                     % via the cardIndex argument
                     card = obj.faceUpCards(cardIndex);
                     obj.faceUpCards(cardIndex) = [];          
-                    obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.dealCard();
     
                     % Then, make sure to check for valid face up
                     % cards (< maxMulticoloredFaceUpAllowed).
