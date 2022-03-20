@@ -2,9 +2,12 @@ classdef DestinationsDeck < handle
     % The DestinationsDeck comprises of and keeps track of the 
     %  destination cards in the game
 
-    properties
-        allDestCards DestinationTicketCard = []    % array containing all destination cards in play
-        currentCardsInDeck DestinationTicketCard = []  % array of DestinationTicketCard objects that are currently in the deck (not in a Player's hand)
+    properties (SetAccess = immutable)
+        allDestCards DestinationTicketCard = DestinationTicketCard.empty    % array containing all destination cards in play -- this will not change throughout the game; there is a designated property for all the cards in order to allow us to reset the deck after each game
+    end
+
+    properties (SetAccess = private)
+        currentCardsInDeck DestinationTicketCard = DestinationTicketCard.empty  % array of DestinationTicketCard objects that are currently in the deck (not in a Player's hand)
     end
     
     methods
@@ -12,11 +15,12 @@ classdef DestinationsDeck < handle
             % DESTINATIONSDECK Construct an instance of this class
             % This constructor accepts arguments that are of class 
             % DestinationTicketCard and puts them into a deck. 
-            assert(string(class(varargin)) == "DestinationTicketCard", ...
+            for i=1:nargin
+                assert(string(class(varargin{i})) == "DestinationTicketCard", ...
                     "Argument class mismatch: all arguments of the DestinationsDeck constructor must " + ...
                     "be of the class DestinationTicketCard.");
-
-            obj.allDestCards = varargin;
+            end
+            obj.allDestCards = [varargin{:}];
         end
         
         function init(obj)
@@ -34,8 +38,8 @@ classdef DestinationsDeck < handle
             shuffle(obj);
         end
 
-        function numCardsLeft = getCardsLeft(obj)
-            % getCardsLeft Returns number of cards remaining in the deck
+        function numCardsLeft = getNumCardsLeft(obj)
+            % getNumCardsLeft Returns number of cards remaining in the deck
             arguments
                 obj DestinationsDeck
             end
@@ -49,19 +53,19 @@ classdef DestinationsDeck < handle
             % the remaining cards
             arguments
                 obj DestinationsDeck
-                numCards {isinteger}
+                numCards {mustBeInteger}
             end
 
-            if numCards <= getCardsLeft(obj)
-                cards = obj.cardsInDeck(1:numCards);
-                obj.cardsInDeck(1:numCards) = [];
-            elseif getCardsLeft(obj) > 0
-                cards = obj.cardsInDeck(1:getCardsLeft(obj));
-                obj.cardsInDeck = [];
+            if numCards <= getNumCardsLeft(obj)
+                cards = obj.currentCardsInDeck(1:numCards);
+                obj.currentCardsInDeck(1:numCards) = [];
+            elseif getNumCardsLeft(obj) > 0
+                cards = obj.currentCardsInDeck;
+                obj.currentCardsInDeck = DestinationTicketCard.empty;
             else
-                strcat(['No destination cards left. ' ...
-                    'The Player cannot draw a Destination card.']);
-                cards = [];
+                disp("No destination cards left. The Player cannot " + ...
+                    "draw a Destination card.");
+                cards = DestinationTicketCard.empty;
             end
         end
 
@@ -76,7 +80,7 @@ classdef DestinationsDeck < handle
                                             % being returned by the Player
             end
 
-            obj.cardsInDeck(getCardsLeft(obj)+1:getCardsLeft(obj)+length(cards)) = cards;
+            obj.currentCardsInDeck = [obj.currentCardsInDeck cards];
         end
         
         function shuffle(obj)
