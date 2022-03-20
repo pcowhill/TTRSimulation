@@ -241,7 +241,7 @@ classdef TrainsDeck < handle
             % the state of the TrainDeck is not drawable -- players may not
             % a draw a card from either the face-up cards or the drawPile
             drawablePileCards = [obj.drawPile, obj.discardPile, obj.faceUpCards];
-            if (length(drawablePileCards) <= obj.nFaceUpCardsNeeded || (sum([drawablePileCards.color] ~= Color.multicolored)) < (obj.nFaceUpCardsNeeded - obj.maxMulticoloredFaceUpAllowed))
+            if (length(drawablePileCards) <= (obj.nFaceUpCardsNeeded + 1) || (sum([drawablePileCards.color] ~= Color.multicolored)) < (obj.nFaceUpCardsNeeded - obj.maxMulticoloredFaceUpAllowed))
                 tf = false;
             else
                 tf = true;
