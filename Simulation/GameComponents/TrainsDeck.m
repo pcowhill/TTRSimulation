@@ -3,15 +3,15 @@ classdef TrainsDeck < handle
     % Maintain the state of the train cards deck including the discard
     % pile and the face up cards
     properties (SetAccess = private)
-        allCards TrainCard = [] % array of TrainCard objects that consists of all train cards to be used in the game
+        allCards TrainCard = TrainCard.empty % array of TrainCard objects that consists of all train cards to be used in the game
                                 % Once this property is initialized, it is
                                 % not changed throughout the object's
                                 % instantiation. This shall be used to
                                 % "reset" our deck in order to run multiple
                                 % games.
-        drawPile TrainCard = []    % array of TrainCard objects in the TrainsDeck that represent the initial deck, and once the game begins, the draw pile
-        discardPile TrainCard = [] % array of TrainCard objects in TrainsDeck that represents cards that have been discarded by players during gameplay
-        faceUpCards TrainCard = [] % array of TrainCard objects that represent the face up cards that players may choose to take during gameplay
+        drawPile TrainCard = TrainCard.empty    % array of TrainCard objects in the TrainsDeck that represent the initial deck, and once the game begins, the draw pile
+        discardPile TrainCard = TrainCard.empty  % array of TrainCard objects in TrainsDeck that represents cards that have been discarded by players during gameplay
+        faceUpCards TrainCard = TrainCard.empty  % array of TrainCard objects that represent the face up cards that players may choose to take during gameplay
         nFaceUpCardsNeeded {mustBeInteger}               % total number of face-up cards allowed in the game
         maxMulticoloredFaceUpAllowed {mustBeInteger} % total number of multicolored cards allowed face-up during the game
     end
@@ -35,24 +35,25 @@ classdef TrainsDeck < handle
             % Base case: 9 numbers indicating the number of each type of colored card are given to the constructor; this expects 9 inputs of either type int8 or int16 
             if (nargin == 9)  
                 
-                assert(string(class(varargin) == "int8"), "The input arguments for 9 argument Trains Deck constructor must all be of type int8.");
-                initNumOfCards = sum(varargin);
+%                 assert(string(class(varargin) == "int8"), "The input arguments for 9 argument Trains Deck constructor must all be of type int8.");
+                initNumOfCards = sum([varargin{:}]);
 
             % Construct an array of Card objects using 9 arguments
  
             % Preallocate the deck and keep track of where cards have been added
-            obj.allCards = zeros(int8(initNumOfCards));
+%             obj.allCards = zeros(int8(initNumOfCards));
+            obj.allCards = TrainCard.empty;
             currentPosition = 1;
 
-            currentPosition = addCardsToDeck(obj, purple, varargin{1}, currentPosition);
-            currentPosition = addCardsToDeck(obj, white, varargin{2}, currentPosition);
-            currentPosition = addCardsToDeck(obj, blue, varargin{3}, currentPosition);
-            currentPosition = addCardsToDeck(obj, yellow, varargin{4}, currentPosition);
-            currentPosition = addCardsToDeck(obj, orange, varargin{5}, currentPosition);
-            currentPosition = addCardsToDeck(obj, black, varargin{6}, currentPosition);
-            currentPosition = addCardsToDeck(obj, red, varargin{7}, currentPosition);
-            currentPosition = addCardsToDeck(obj, green, varargin{8}, currentPosition);
-            addCardsToDeck(obj, multicolored, varargin{9}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.purple, varargin{1}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.white, varargin{2}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.blue, varargin{3}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.yellow, varargin{4}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.orange, varargin{5}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.black, varargin{6}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.red, varargin{7}, currentPosition);
+            currentPosition = addCardsToDeck(obj, Color.green, varargin{8}, currentPosition);
+            addCardsToDeck(obj, Color.multicolored, varargin{9}, currentPosition);
 
             % Build a custom deck (with varying numbers of each type of
             % card
@@ -150,8 +151,8 @@ classdef TrainsDeck < handle
             % multicoloreds. Note: Only adding the number of cards equal to the 
             % allowed # of multicolored cards before checking is safe and cuts 
             % down on the checking of every single card.
-                obj.faceUpCards(1:obj.nMultiColoredFaceUpCardsAllowed) = obj.drawPile(1:obj.nMultiColoredFaceUpCardsAllowed);
-                obj.drawPile(1:obj.nMultiColoredFaceUpCardsAllowed) = [];
+                obj.faceUpCards(1:obj.maxMulticoloredFaceUpAllowed) = obj.drawPile(1:obj.maxMulticoloredFaceUpAllowed);
+                obj.drawPile(1:obj.maxMulticoloredFaceUpAllowed) = [];
                 addAndCheckFaceUpCards(obj);
             else
             % else leave all cards in the drawPile -- we don't have enough
@@ -160,18 +161,26 @@ classdef TrainsDeck < handle
             end
         end
 
-        function card = drawCard(obj, cardIndex)
+        function card = drawCard(obj, card)
             % drawCard 
-            % Draw face up card at the given cardIndex and replace
-            % it. If the cardIndex is greater than the number of face up
-            % cards, draw from the deck.
+            % Draw given face up card
+            % If the card color is unknown, draw from the deck.
             arguments
                 obj TrainsDeck
-                cardIndex {mustBeInteger}
+                card TrainCard
             end
             
             if drawable(obj)
 
+                % get index of card in face up pile
+                cardIndex = find([obj.faceUpCards.color] == card.color);
+                if ~isempty(cardIndex)
+                    % card is face up, grab first instance
+                    cardIndex = cardIndex(1);
+                else
+                    % card is not in face up pile, draw from deck
+                    cardIndex = length(obj.faceUpCards)+1;
+                end
             % If the index is <= the number of face-up cards, draw the 
             % indexed face-up card
                 if (cardIndex <= length(obj.faceUpCards))          
@@ -186,7 +195,7 @@ classdef TrainsDeck < handle
                     % it gets shuffled. Then, make sure to check for valid face up
                     % cards (< maxMulticoloredFaceUpAllowed).
                     checkDrawPile(obj, 1);
-                    addAndCheckFaceUpCards(obj.faceUpCards);
+                    obj.addAndCheckFaceUpCards();
                 else 
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
@@ -226,7 +235,7 @@ classdef TrainsDeck < handle
         function cards = getFaceUpCards(obj)
            %getFaceUpCards Returns the set of currently face up cards
             arguments
-                obj TrainDeck
+                obj TrainsDeck
             end
 
             cards = obj.faceUpCards;
@@ -278,7 +287,7 @@ classdef TrainsDeck < handle
             % a draw a card from either the face-up cards or the drawPile
             drawablePileCards = [obj.drawPile, obj.discardPile, obj.faceUpCards];
 
-            if (length(drawablePileCards) <= obj.nFaceUpCardsNeeded || (sum(drawablePileCards) ~= "multicolored") < obj.nFaceUpCardsNeeded - obj.maxMulticoloredFaceUpAllowed)
+            if length(drawablePileCards) <= obj.nFaceUpCardsNeeded || (sum([drawablePileCards.color] ~= Color.multicolored) < obj.nFaceUpCardsNeeded - obj.maxMulticoloredFaceUpAllowed)
                 tf = false;
             else
                 tf = true;
@@ -298,6 +307,7 @@ classdef TrainsDeck < handle
             % middle of the game, this will not affect the desired outcome
             % -- as appending empty arrays will not change the array.
             obj.drawPile = [obj.drawPile, obj.discardPile]; 
+            obj.discardPile = TrainCard.empty;
             newOrderIdx = randperm(length(obj.drawPile));
     
             % Put the cards in their new order
@@ -330,9 +340,9 @@ classdef TrainsDeck < handle
                     % If there are more than the allowed number of multicolored
                     % cards facing up, discard all faceUpCards (note: this if 
                     % section should not have to be executed too often).
-                    if (sum(obj.faceUpCards == "multicolored") > obj.maxMulticoloredFaceUpAllowed)              
+                    if (sum([obj.faceUpCards.color] == Color.multicolored) > obj.maxMulticoloredFaceUpAllowed)              
                         obj.discardPile = [obj.discardPile, obj.faceUpCards];
-                        obj.faceUpCards = [];
+                        obj.faceUpCards = TrainCard.empty;
                         
                         % Check that there are, in fact, at least n cards in the 
                         % draw pile to put in face up cards. To cut down on 
@@ -347,7 +357,7 @@ classdef TrainsDeck < handle
                         % through the loop to accomplish this, considering 
                         % there should not be proportionally too many 
                         % multicolored cards in the deck.
-                        if atLeastNCardsInDrawPile(obj.maxMulticoloredFaceUpAllowed)   
+                        if obj.atLeastNCardsInDrawPile(obj.maxMulticoloredFaceUpAllowed)   
                             % We'll add in 1 less than the allowed number of
                             % multicolored cards -- this will ensure we know we
                             % are not adding in any multicolored cards
@@ -382,7 +392,7 @@ classdef TrainsDeck < handle
             % will ensure that, if the TrainDeck is drawable, the drawPile
             % is always gets reshuffled when it falls below nCards.
             arguments
-                obj trainsDeck
+                obj TrainsDeck
                 nCards {mustBeInteger}
             end
 
@@ -393,7 +403,7 @@ classdef TrainsDeck < handle
                 % If there are not nCards in the draw pile, then shuffle the
                 % discardPile into the drawPile. (This would most often be used
                 % when nCards = 0, => an empty drawPile.)
-                if ~atLeastNCardsinDrawPile(nCards)
+                if ~obj.atLeastNCardsinDrawPile(nCards)
                     shuffle(obj);
                 end
             end

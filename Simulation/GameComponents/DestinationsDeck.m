@@ -3,8 +3,8 @@ classdef DestinationsDeck < handle
     %  destination cards in the game
 
     properties
-        allDestCards DestinationTicketCard = []    % array containing all destination cards in play
-        currentCardsInDeck DestinationTicketCard = []  % array of DestinationTicketCard objects that are currently in the deck (not in a Player's hand)
+        allDestCards DestinationTicketCard = DestinationTicketCard.empty   % array containing all destination cards in play
+        currentCardsInDeck DestinationTicketCard = DestinationTicketCard.empty   % array of DestinationTicketCard objects that are currently in the deck (not in a Player's hand)
     end
     
     methods
@@ -12,11 +12,11 @@ classdef DestinationsDeck < handle
             % DESTINATIONSDECK Construct an instance of this class
             % This constructor accepts arguments that are of class 
             % DestinationTicketCard and puts them into a deck. 
-            assert(string(class(varargin)) == "DestinationTicketCard", ...
-                    "Argument class mismatch: all arguments of the DestinationsDeck constructor must " + ...
-                    "be of the class DestinationTicketCard.");
+%             assert(string(class(varargin{:})) == "DestinationTicketCard", ...
+%                     "Argument class mismatch: all arguments of the DestinationsDeck constructor must " + ...
+%                     "be of the class DestinationTicketCard.");
 
-            obj.allDestCards = varargin;
+            obj.allDestCards = [varargin{:}];
         end
         
         function init(obj)
@@ -53,11 +53,11 @@ classdef DestinationsDeck < handle
             end
 
             if numCards <= getCardsLeft(obj)
-                cards = obj.cardsInDeck(1:numCards);
-                obj.cardsInDeck(1:numCards) = [];
+                cards = obj.currentCardsInDeck(1:numCards);
+                obj.currentCardsInDeck(1:numCards) = [];
             elseif getCardsLeft(obj) > 0
-                cards = obj.cardsInDeck(1:getCardsLeft(obj));
-                obj.cardsInDeck = [];
+                cards = obj.currentCardsInDeck(1:getCardsLeft(obj));
+                obj.currentCardsInDeck = [];
             else
                 strcat(['No destination cards left. ' ...
                     'The Player cannot draw a Destination card.']);
@@ -76,7 +76,7 @@ classdef DestinationsDeck < handle
                                             % being returned by the Player
             end
 
-            obj.cardsInDeck(getCardsLeft(obj)+1:getCardsLeft(obj)+length(cards)) = cards;
+            obj.currentCardsInDeck(getCardsLeft(obj)+1:getCardsLeft(obj)+length(cards)) = cards;
         end
         
         function shuffle(obj)

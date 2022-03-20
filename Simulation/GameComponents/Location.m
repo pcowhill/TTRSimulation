@@ -26,7 +26,7 @@ classdef Location
         Oklahoma_City
         Omaha
         Phoenix
-        Pittsburg
+        Pittsburgh
         Portland
         Raleigh
         Saint_Louis

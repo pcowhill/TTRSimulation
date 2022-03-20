@@ -9,7 +9,8 @@ classdef BoardTest < matlab.unittest.TestCase
     
     methods(TestMethodSetup)
         function createBoard(obj)
-            initializeBoard;
+            addpath('..')
+            BaseBoard.initializeBoard;
             obj.theBoard = BOARD;
         end
     end
@@ -20,33 +21,32 @@ classdef BoardTest < matlab.unittest.TestCase
     methods(Test)
         function resetRouteOwnersWorks(obj)
             % resetRouteOwnersWorks
-            % Ensures reseting the owners of Board via init works properly
+            % Ensures the resetRouteOwners method of Board works properly
 
             % Add color and route names
-            initializeRoutes;
+            addpath('..')
+            BaseBoard.initializeRoutes;
             initializeColors;
-
-            % Reset the ownership map
-            obj.theBoard.init();
-
-            % Check that no routes are owned
-            obj.verifyTrue(310 == obj.theBoard.getNumOfTrains(Color.gray))
-
-            % Claim some routes
-            obj.theBoard.claim(ROUTE_DENVER_TO_OMAHA, YELLOW);
-            obj.theBoard.claim(ROUTE_DALLAS_TO_OKLAHOMA_CITY_A, YELLOW);
-            obj.theBoard.claim(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B, RED);
-
-            % Check that the claimed routes are owned
-            obj.verifyTrue(301 == obj.theBoard.getNumOfTrains(Color.gray))
-            obj.verifyTrue(6 == obj.theBoard.getNumOfTrains(Color.yellow))
-            obj.verifyTrue(3 == obj.theBoard.getNumOfTrains(Color.red))
 
             % Reset the ownership map
             obj.theBoard.resetRouteOwners();
 
             % Check that no routes are owned
-            obj.verifyTrue(310 == obj.theBoard.getNumOfTrains(Color.gray))
+            obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)
+
+            % Claim some routes
+            obj.theBoard.claim(DENVER_TO_OMAHA, YELLOW);
+            obj.theBoard.claim(DALLAS_TO_OKLAHOMA_CITY_A, YELLOW);
+            obj.theBoard.claim(LOS_ANGELES_TO_SAN_FRANCISCO_B, RED);
+
+            % Check that the claimed routes are owned
+            obj.verifyTrue(3 == obj.theBoard.ownershipMap.Count)
+
+            % Reset the ownership map
+            obj.theBoard.resetRouteOwners();
+
+            % Check that no routes are owned
+            obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)
         end
 
         function claimerOfRouteBecomesOwner(obj)
@@ -57,7 +57,7 @@ classdef BoardTest < matlab.unittest.TestCase
 
             % Add color and route names
             addpath('..')
-            initializeRoutes;
+            BaseBoard.initializeRoutes;
             initializeColors;
 
             % Check that certain routes are not owned
