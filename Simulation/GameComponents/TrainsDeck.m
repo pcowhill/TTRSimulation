@@ -142,8 +142,7 @@ classdef TrainsDeck < handle
         function card = drawCard(obj, cardIndex)
             % drawCard 
             % Draw face up card at the given cardIndex and replace
-            % it. If the cardIndex is greater than the number of face up
-            % cards, draw from the deck.
+            % it. If the cardIndex is less than 1, draw from the deck.
             arguments
                 obj TrainsDeck
                 cardIndex {mustBeInteger}
