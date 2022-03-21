@@ -53,7 +53,7 @@ classdef TrainsDeck < handle
             % argument immediately following should be the number of that
             % card. The third argument must be the color of the card and
             % the fourth must be the number of that card, etc.
-            % e.g., TrainsDeck(Color.Blue, int8(5), Color.Yellow, int8(6), Color.white, int8(11))
+            % e.g., TrainsDeck(Color.blue, int8(5), Color.yellow, int8(6), Color.white, int8(11))
             else
                 % Check for an even number of arguments. 
                 assert(rem(nargin,2) == 0, "You must supply exactly 9 argument " + ...
