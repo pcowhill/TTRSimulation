@@ -34,7 +34,7 @@ classdef RulesTest < matlab.unittest.TestCase
             
             board.claim(ROUTE_MONTREAL_TO_NEW_YORK, Color.red);
             
-            trainsDeck = TrainsDeck(1,1,1,1,1,1,1,1,1);
+            trainsDeck = TrainsDeck(int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1));
             destinationsDeck = DestinationsDeck(DestinationTicketCard("Atlanta","Charleston",0));
             rules = RulesStub();
             player = PlayerStub();
