@@ -61,7 +61,17 @@ classdef Route
         function tf = eq(routeA, routeB)
             % eq
             % Override == by checking if the id's are the same
-            tf = routeA.id == routeB.id;
+            sizeA = size(routeA);
+            if sizeA(1)==1 && sizeA(2)==1
+                tf = routeA.id == routeB.id;
+            else
+                tf = zeros(sizeA);
+                for i = 1:sizeA(1)
+                    for j = 1:sizeA(2)
+                        tf(i,j) = routeA(i,j).id == routeB.id;
+                    end
+                end
+            end
         end
     end
 end
