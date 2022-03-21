@@ -9,37 +9,27 @@ classdef DestinationTicketCard
 % 1-3 destination cards. 
 
     properties (SetAccess = immutable)
-        firstLocation  % first Location on destination card
-        secondLocation % second Location on destination card
-        pointValue     % integer amount of points a Player earns for completing the particular destination card
+        firstLocation Location  % first Location on destination card
+        secondLocation Location % second Location on destination card
+        pointValue {mustBeNumeric}    % integer amount of points a Player earns for completing the particular destination card
     end
+
     methods
-        % parameters are of class Location and points are integer
+
         function obj = DestinationTicketCard(inFirstLocation, inSecondLocation, inPoints)
             % DestionationTicketCard Constructor
             % Creates a DestionationTicketCard object and defines the
             % properties with two Location objects and 1 integer object
-
-            % Check that the corrrect number of arguments was given to the
-            % constructor
-            assert(nargin == 3, "A destination ticket card must have 3 input arguments: " + ...
-                    "2 paramaters of class Location, representing the two " + ...
-                    "destination cities, and a third integer parameter, " + ...
-                    "representing the number of points.")
-
-            % Check that the objects sent to the constructor are of the
-            % correct data type
-            assert(string(class(inFirstLocation)) == "Location", ...
-                "The first parameter of the DestinationTicketCard constructor was not an object of the Location class.")
-            assert(string(class(inSecondLocation)) == "Location", ...
-                "The second parameter of the DestinationTicketCard constructor was not an object of the Location class.")
-            assert(or(string(class(inPoints)) == "int8",string(class(inPoints)) == "int16"), ...
-                "The third parameter of the DestinationTicketCard constructor must be of the type int8 or int16.")
-
+            arguments
+                inFirstLocation Location
+                inSecondLocation Location
+                inPoints {mustBeNumeric}
+            end
+    
             % Assign properties to DestinationTicketCard object
-            obj.firstLocation = inFirstLocation;  % first Location on destination car   
-            obj.secondLocation = inSecondLocation;  % second Location on destination car   
-            obj.pointValue = inPoints;  % points a destination card is worth
+            obj.firstLocation = inFirstLocation;  % first Location on destination card   
+            obj.secondLocation = inSecondLocation;  % second Location on destination card   
+            obj.pointValue = inPoints;  % points card is worth
         end
     end
 end
