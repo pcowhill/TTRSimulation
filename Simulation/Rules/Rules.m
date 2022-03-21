@@ -107,7 +107,7 @@ classdef Rules < handle
                             %player has enoug cards of to claim the route
                             %including locomotives. Make sure not to count
                             %locomotives twice                        
-                            useableColors = colors(route.length <= colorCounts+((colors~=Color.multicolored)*colorCounts(multicoloredIx)));
+                            useableColors = colors(and(colorCounts>0,route.length <= colorCounts+((colors~=Color.multicolored)*colorCounts(multicoloredIx))));
                             for c=1:length(useableColors)
                                 claimableRoutes(end+1) = route;
                                 claimableRouteColors(end+1) = useableColors(c);
@@ -116,7 +116,7 @@ classdef Rules < handle
                             % if it's a colored route, check if the player
                             % has enough cards to claim it including
                             % locomotives
-                            if route.length <= colorCounts(colors==route.color)+((route.color~=Color.multicolored)*colorCounts(multicoloredIx))
+                            if colorCounts(colors==route.color)>0 && route.length <= colorCounts(colors==route.color)+((route.color~=Color.multicolored)*colorCounts(multicoloredIx))
                                 claimableRoutes(end+1) = route;
                                 claimableRouteColors(end+1) = route.color;
                             end

@@ -1,97 +1,88 @@
-classdef BoardTest < matlab.unittest.TestCase
-    % BoardTest
-    % Tests the capabilities of the Board class to ensure it functions as
+classdef RulesTest < matlab.unittest.TestCase
+    % RulesTest
+    % Tests the capabilities of the Rules class to ensure it functions as
     % intended.
     
+    
     properties
-        theBoard % The board that the tests are run on.
+
     end
     
     methods(TestMethodSetup)
-        function createBoard(obj)
-            addpath('..')
-            BaseBoard.initializeBoard;
-            obj.theBoard = BOARD;
-        end
+
     end
 
     methods(TestMethodTeardown)
     end
 
     methods(Test)
-        function resetRouteOwnersWorks(obj)
-            % resetRouteOwnersWorks
-            % Ensures the resetRouteOwners method of Board works properly
+        function GetClaimableRoutesTest(obj)
+            % GetClaimableRoutesTest
+            % Checks that claimable routes are returned correctly
 
-            % Add color and route names
-            addpath('..')
-            BaseBoard.initializeRoutes;
-            initializeColors;
+            ROUTE_ATLANTA_TO_CHARLESTON = Route(Location.Atlanta, Location.Charleston, Color.gray, 2);
+            ROUTE_ATLANTA_TO_MIAMI = Route(Location.Atlanta, Location.Miami, Color.blue, 5);
+            ROUTE_BOSTON_TO_NEW_YORK_A = Route(Location.Boston, Location.New_York, Color.yellow, 2);
+            ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B = Route(Location.Kansas_City, Location.Saint_Louis, Color.blue, 2);
+            ROUTE_MONTREAL_TO_NEW_YORK = Route(Location.Montreal, Location.New_York, Color.blue, 3);
 
-            % Reset the ownership map
-            obj.theBoard.resetRouteOwners();
+            board = Board(ROUTE_ATLANTA_TO_CHARLESTON, ... %gray 2
+            ROUTE_ATLANTA_TO_MIAMI, ... %blue 5
+            ROUTE_BOSTON_TO_NEW_YORK_A, ... % yellow 2
+            ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B, ...%blue 2
+            ROUTE_MONTREAL_TO_NEW_YORK); %blue 3        
+            
+            board.claim(ROUTE_MONTREAL_TO_NEW_YORK, Color.red);
+            
+            trainsDeck = TrainsDeck(1,1,1,1,1,1,1,1,1);
+            destinationsDeck = DestinationsDeck(DestinationTicketCard("Atlanta","Charleston",0));
+            rules = RulesStub();
+            player = PlayerStub();
+            player.color = Color.green;
 
-            % Check that no routes are owned
-            obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)
+            player.trainCardsHand = TrainCard.empty;
+            checkRoutes(Route.empty, Color.empty, "No cards in hand");
 
-            % Claim some routes
-            obj.theBoard.claim(DENVER_TO_OMAHA, YELLOW);
-            obj.theBoard.claim(DALLAS_TO_OKLAHOMA_CITY_A, YELLOW);
-            obj.theBoard.claim(LOS_ANGELES_TO_SAN_FRANCISCO_B, RED);
+            player.trainCardsHand = [TrainCard(Color.blue), TrainCard(Color.blue), TrainCard(Color.yellow)];
+            checkRoutes([ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B], [Color.blue, Color.blue], "2 blue");
 
-            % Check that the claimed routes are owned
-            obj.verifyTrue(3 == obj.theBoard.ownershipMap.Count)
+            player.trainCardsHand = [TrainCard(Color.blue), TrainCard(Color.blue), TrainCard(Color.yellow), TrainCard(Color.yellow)];
+            checkRoutes([ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B, ...
+                ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_BOSTON_TO_NEW_YORK_A],...
+                [Color.blue, Color.blue, Color.yellow, Color.yellow], "2 blue, 2 yellow");
 
-            % Reset the ownership map
-            obj.theBoard.resetRouteOwners();
+            player.trainCardsHand = [TrainCard(Color.blue), TrainCard(Color.blue), TrainCard(Color.multicolored), TrainCard(Color.yellow), TrainCard(Color.yellow)];
+            checkRoutes([ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B, ...
+                ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_BOSTON_TO_NEW_YORK_A],...
+                [Color.blue, Color.blue, Color.yellow, Color.yellow], "Locomotive");
 
-            % Check that no routes are owned
-            obj.verifyTrue(0 == obj.theBoard.ownershipMap.Count)
+            player.trainCardsHand = [TrainCard(Color.blue), TrainCard(Color.blue), TrainCard(Color.multicolored), TrainCard(Color.multicolored), TrainCard(Color.blue), TrainCard(Color.yellow)];
+            checkRoutes([ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_KANSAS_CITY_TO_SAINT_LOUIS_B, ...
+                ROUTE_ATLANTA_TO_MIAMI, ROUTE_ATLANTA_TO_CHARLESTON, ROUTE_BOSTON_TO_NEW_YORK_A, ROUTE_ATLANTA_TO_CHARLESTON],...
+                [Color.blue, Color.blue, Color.blue, Color.yellow, Color.yellow, Color.multicolored], "2 Locomotive");
+            
+            function checkRoutes(expectedRoutes, expectedColors, diagnostic)
+                [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
+                    rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, ...
+                    Route.empty, TrainCard.empty, 0);
+                obj.verifyTrue(length(claimableRoutes)==length(expectedRoutes),diagnostic);
+                obj.verifyTrue(length(claimableRouteColors)==length(expectedColors),diagnostic);
+                for ix=1:length(expectedRoutes)
+                    found = false;
+                    for rIx=1:length(claimableRoutes)
+                        if(claimableRoutes(rIx).id == expectedRoutes(ix).id && ...
+                                claimableRouteColors(rIx) == expectedColors(ix))
+                            found=true;
+                        end
+                    end
+                    obj.verifyTrue(found, diagnostic);
+                end
+                
+            end
         end
 
-        function claimerOfRouteBecomesOwner(obj)
-            % claimerOfRouteBecomesOwner
-            % Ensures a route is unowned prior to being claimed, becomes
-            % owned once it is claimed, and the owner is correctly returned
-            % when queried.
-
-            % Add color and route names
-            addpath('..')
-            BaseBoard.initializeRoutes;
-            initializeColors;
-
-            % Check that certain routes are not owned
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_DENVER_TO_OMAHA));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_DALLAS_TO_OKLAHOMA_CITY_A));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_SEATTLE_TO_VANCOUVER_B));
-
-            % Each of four players claim a route
-            obj.theBoard.claim(ROUTE_DENVER_TO_OMAHA, YELLOW);
-            obj.theBoard.claim(ROUTE_DALLAS_TO_OKLAHOMA_CITY_A, BLUE);
-            obj.theBoard.claim(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B, ORANGE);
-            obj.theBoard.claim(ROUTE_SEATTLE_TO_VANCOUVER_B, RED);
-
-            % Check that the routes are now owned
-            obj.verifyTrue(obj.theBoard.isOwned(ROUTE_SEATTLE_TO_VANCOUVER_B));
-            obj.verifyTrue(obj.theBoard.isOwned(ROUTE_DALLAS_TO_OKLAHOMA_CITY_A));
-            obj.verifyTrue(obj.theBoard.isOwned(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B));
-            obj.verifyTrue(obj.theBoard.isOwned(ROUTE_DENVER_TO_OMAHA));
-
-            % Check that various other routes are still unowned
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_SEATTLE_TO_VANCOUVER_A));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_DALLAS_TO_OKLAHOMA_CITY_B));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_HELENA_TO_SEATTLE));
-            obj.verifyFalse(obj.theBoard.isOwned(ROUTE_DENVER_TO_OKLAHOMA_CITY));
-
-            % Check that the route owners are correct
-            % Patrick Note: verifyEqual did not work on type Color
-            obj.verifyTrue(obj.theBoard.owner(ROUTE_DALLAS_TO_OKLAHOMA_CITY_A) == BLUE);
-            obj.verifyTrue(obj.theBoard.owner(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B) == ORANGE);
-            obj.verifyTrue(obj.theBoard.owner(ROUTE_SEATTLE_TO_VANCOUVER_B) == RED);
-            obj.verifyTrue(obj.theBoard.owner(ROUTE_DENVER_TO_OMAHA) == YELLOW);
-            obj.verifyTrue(obj.theBoard.owner(ROUTE_EL_PASO_TO_SANTA_FE) == GRAY);
-        end
     end
 end
+
+
 
