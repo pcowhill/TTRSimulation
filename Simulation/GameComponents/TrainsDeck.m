@@ -2,6 +2,7 @@ classdef TrainsDeck < handle
     % TRAINSDECK Train card deck
     % Maintain the state of the train cards deck including the discard
     % pile and the face up cards
+
     properties (SetAccess = immutable)
         allCards TrainCard = TrainCard.empty % array of TrainCard objects that consists of all train cards to be used in the game
                                 % Once this property is initialized, it is
@@ -37,13 +38,13 @@ classdef TrainsDeck < handle
             % Base case: 9 numbers indicating the number of each type of colored card are given to the constructor; this expects 9 inputs of either type int8 or int16 
 
             if (nargin == 9)  
-                
                 for i = 1:9
                     assert(string(class(varargin{i})) == "int8", "The input arguments for 9 argument Trains Deck constructor must all be of type int8.");
                 end
             
                 v = [TrainCard("purple"), TrainCard("white"), TrainCard("blue"), TrainCard("yellow"), TrainCard("orange"), TrainCard("black"), TrainCard("red"), TrainCard("green"), TrainCard("multicolored")];
                 obj.allCards = repelem(v,[varargin{1}, varargin{2}, varargin{3}, varargin{4}, varargin{5}, varargin{6}, varargin{7}, varargin{8}, varargin{9}]);
+
 
             % Build a custom deck (with varying numbers of each type of
             % card
@@ -139,21 +140,43 @@ classdef TrainsDeck < handle
             end
         end
 
-        function card = drawCard(obj, cardIndex)
+        function card = drawCard(obj, card)
             % drawCard 
-            % Draw face up card at the given cardIndex and replace
-            % it. If the cardIndex is less than 1, draw from the deck.
+            % Draw given face up card
+            % If the card color is unknown, draw from the deck.
             arguments
                 obj TrainsDeck
-                cardIndex {mustBeInteger}
+                card TrainCard
             end
 
             if drawable(obj)
 
-            % If the index is < 1, then take a card from the draw pile
-                if cardIndex < 1
-                    
+
+                % get index of card in face up pile
+                cardIndex = find([obj.faceUpCards.color] == card.color);
+                if ~isempty(cardIndex)
+                    % card is face up, grab first instance
+                    cardIndex = cardIndex(1);
+                else
+                    % card is not in face up pile, draw from deck
+                    cardIndex = -1;
+                end
+            % If the index is <= the number of face-up cards, draw the 
+            % indexed face-up card
+                if (cardIndex > 0 && cardIndex <= length(obj.faceUpCards))          
+                    % Return the face-up card specified by the Player 
+                    % via the cardIndex argument
+                    card = obj.faceUpCards(cardIndex);
+                    obj.faceUpCards(cardIndex) = [];          
+                    obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
+                    obj.drawPile(1) = [];
+    
+                    % If the drawPile is drawable and empty, make sure 
+                    % it gets shuffled. Then, make sure to check for valid face up
+                    % cards (< maxMulticoloredFaceUpAllowed).
                     checkDrawPile(obj, 1);
+                    obj.addAndCheckFaceUpCards();
+                elseif(cardIndex < 0)
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
                     card = obj.drawPile(1); 
@@ -162,15 +185,6 @@ classdef TrainsDeck < handle
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. 
                     checkDrawPile(obj, 1);
-                elseif (cardIndex <= length(obj.faceUpCards))          
-                    % Return the face-up card specified by the Player 
-                    % via the cardIndex argument
-                    card = obj.faceUpCards(cardIndex);
-                    obj.faceUpCards(cardIndex) = [];          
-    
-                    % Then, make sure to check for valid face up
-                    % cards (< maxMulticoloredFaceUpAllowed).
-                    addAndCheckFaceUpCards(obj);
                 else
                     disp("Index given for drawing a card from the draw " + ...
                         "pile or face-up cards was out of range.")
@@ -182,7 +196,7 @@ classdef TrainsDeck < handle
         end
 
         function card = dealCard(obj)
-            card = obj.drawCard(0);
+            card = obj.drawCard(TrainCard(Color.unknown));
         end
 
         function discard(obj, card)

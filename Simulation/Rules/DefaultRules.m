@@ -11,7 +11,7 @@ classdef DefaultRules < Rules
             rules.turnsRemaining = -1;
         end
 
-        function [claimableRoutes, drawableCards, drawDestinationCards] = ...
+        function [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
                 getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations)
             arguments
                 rules Rules
@@ -21,14 +21,15 @@ classdef DefaultRules < Rules
                 destinationsDeck DestinationsDeck
                 routesClaimed Route
                 cardsDrawn TrainCard
-                drawnDestinations DestinationTicketCard
+                drawnDestinations
             end
             if ~isempty(routesClaimed) || length(cardsDrawn) > 1 || drawnDestinations
                 % if the player has drawn two cards, claimed a route or
                 % drawn destination cards, their turn is over and they have
                 % no more possible actions
-                claimableRoutes = [];
-                drawableCards = [];
+                claimableRoutes = Route.empty;
+                claimableRouteColors = Color.empty;
+                drawableCards = TrainCard.empty;
                 drawDestinationCards = 0;
             else
                 drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
@@ -44,13 +45,14 @@ classdef DefaultRules < Rules
                     drawableCards(indicesToRemove) = [];
 
                     % Can only draw a card as second action
-                    claimableRoutes = [];
+                    claimableRoutes = Route.empty;
+                    claimableRouteColors = Color.empty;
                     drawDestinationCards = 0;
                 else
-                    if destinationsDeck.getCardsLeft() > 0
+                    if destinationsDeck.getNumCardsLeft() > 0
                         drawDestinationCards = 1;                
                     end
-                    claimableRoutes = rules.getClaimableRoutes(player, board);
+                    [claimableRoutes, claimableRouteColors] = rules.getClaimableRoutes(player, board);
                 end
 
                 
@@ -72,16 +74,16 @@ classdef DefaultRules < Rules
                 points = 2;
             elseif route.length == 3
                 points = 4;
-            elseif routes.length == 4
+            elseif route.length == 4
                 points = 7;
-            elseif routes.length == 5
+            elseif route.length == 5
                 points = 10;
             else
                 points = 15;
             end
         end
 
-        function udpateGameState(rules, board, players, trainsDeck, destinationsDeck)
+        function updateGameState(rules, board, players, trainsDeck, destinationsDeck)
             for p = 1:length(players)
                 if rules.startingTrains - board.getNumOfTrains(players(p).color) <= 2
                     % if a player has two or less trains remaining,
@@ -92,6 +94,7 @@ classdef DefaultRules < Rules
                     else
                         rules.turnsRemaining = rules.turnsRemaining - 1;
                     end
+                    break;
                 end
             end
         end
@@ -99,7 +102,32 @@ classdef DefaultRules < Rules
         function over = isGameOver(rules)
             % turnsRemaining==0 only when the end condition is triggered
             % and everyone has taken their final turn
-            over = rules.turnsRemaining ~= 0;
+            over = rules.turnsRemaining == 0;
+        end
+
+        function updateEndgameScores(rules, board, players)
+            % apply destination ticket and longest route victory points
+            [ticketsCompleted, longestRouteLengths] = getTicketsCompletedAndLongestRoute(rules, board, players);
+
+            for playerIx=1:length(players)
+                destinationTickets = players(playerIx).destinationCardsHand;
+                for destIx=1:length(destinationTickets)
+                    if ticketsCompleted{playerIx}(destIx)
+                        % add points if ticket was completed
+                        players(playerIx).addToVictoryPoints(destinationTickets(destIx).pointValue);
+                    else
+                        % subtract points if ticket was not completed
+                        players(playerIx).addToVictoryPoints(-destinationTickets(destIx).pointValue);
+                    end
+                end
+            end
+
+            % longest route receives points, all receive points in case of
+            % tie
+            longestRouteWinners = find(longestRouteLengths == max(longestRouteLengths));
+            for playerIx=1:length(longestRouteWinners)
+                players(longestRouteWinners(playerIx)).addToVictoryPoints(rules.longestRoutePoints);
+            end
         end
     end
 end

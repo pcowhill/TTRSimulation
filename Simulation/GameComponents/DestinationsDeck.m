@@ -20,6 +20,7 @@ classdef DestinationsDeck < handle
                     "Argument class mismatch: all arguments of the DestinationsDeck constructor must " + ...
                     "be of the class DestinationTicketCard.");
             end
+
             obj.allDestCards = [varargin{:}];
         end
         
