@@ -42,7 +42,7 @@ classdef TrainsDeck < handle
                     assert(string(class(varargin{i})) == "int8", "The input arguments for 9 argument Trains Deck constructor must all be of type int8.");
                 end
             
-                v = [TrainCard("purple"), TrainCard("white"), TrainCard("blue"), TrainCard("yellow"), TrainCard("orange"), TrainCard("black"), TrainCard("red"), TrainCard("green"), TrainCard("multicolored")];
+                v = [TrainCard(Color.purple), TrainCard(Color.white), TrainCard(Color.blue), TrainCard(Color.yellow), TrainCard(Color.orange), TrainCard(Color.black), TrainCard(Color.red), TrainCard(Color.green), TrainCard(Colormulticolored)];
                 obj.allCards = repelem(v,[varargin{1}, varargin{2}, varargin{3}, varargin{4}, varargin{5}, varargin{6}, varargin{7}, varargin{8}, varargin{9}]);
 
             % Build a custom deck (with varying numbers of each type of
