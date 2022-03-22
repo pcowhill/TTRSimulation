@@ -42,7 +42,7 @@ classdef TrainsDeck < handle
                     assert(string(class(varargin{i})) == "int8", "The input arguments for 9 argument Trains Deck constructor must all be of type int8.");
                 end
             
-                v = [TrainCard("purple"), TrainCard("white"), TrainCard("blue"), TrainCard("yellow"), TrainCard("orange"), TrainCard("black"), TrainCard("red"), TrainCard("green"), TrainCard("multicolored")];
+                v = [TrainCard(Color.purple), TrainCard(Color.white), TrainCard(Color.blue), TrainCard(Color.yellow), TrainCard(Color.orange), TrainCard(Color.black), TrainCard(Color.red), TrainCard(Color.green), TrainCard(Color.multicolored)];
                 obj.allCards = repelem(v,[varargin{1}, varargin{2}, varargin{3}, varargin{4}, varargin{5}, varargin{6}, varargin{7}, varargin{8}, varargin{9}]);
 
 
@@ -54,7 +54,7 @@ classdef TrainsDeck < handle
             % argument immediately following should be the number of that
             % card. The third argument must be the color of the card and
             % the fourth must be the number of that card, etc.
-            % e.g., TrainsDeck(Color.Blue, int8(5), Color.Yellow, int8(6), Color.white, int8(11))
+            % e.g., TrainsDeck(Color.blue, int8(5), Color.yellow, int8(6), Color.white, int8(11))
             else
                 % Check for an even number of arguments. 
                 assert(rem(nargin,2) == 0, "You must supply exactly 9 argument " + ...
