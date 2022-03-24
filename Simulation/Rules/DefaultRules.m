@@ -107,12 +107,13 @@ classdef DefaultRules < Rules
 
         function updateEndgameScores(rules, board, players)
             % apply destination ticket and longest route victory points
-            [ticketsCompleted, longestRouteLengths] = getTicketsCompletedAndLongestRoute(rules, board, players);
+           longestRouteLengths = getLongestRoute(rules, board, players);
 
             for playerIx=1:length(players)
                 destinationTickets = players(playerIx).destinationCardsHand;
+                ticketsCompleted = getTicketsCompleted(rules,board,players(playerIx));
                 for destIx=1:length(destinationTickets)
-                    if ticketsCompleted{playerIx}(destIx)
+                    if ticketsCompleted(destIx)
                         % add points if ticket was completed
                         players(playerIx).addToVictoryPoints(destinationTickets(destIx).pointValue);
                     else
