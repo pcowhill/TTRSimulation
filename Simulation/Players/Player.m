@@ -55,7 +55,7 @@ classdef Player < handle
                         cardsDrawn = [cardsDrawn drawableCards(card)];
                         player.drawTrainCard(trainsDeck, drawableCards(card));
                     elseif destinations
-                        player.drawDestinations(destinationsDeck);
+                        player.drawDestinations(board,destinationsDeck);
                     end
                     if rules.isTurnOver(claimableRoutes, drawableCards, drawDestinationCards, route, card, destinations)
                         turnOver = true;
