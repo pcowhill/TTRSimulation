@@ -53,7 +53,7 @@ classdef PlayerTest < matlab.unittest.TestCase
             rules.action=0;
             player.takeTurn(rules,board,trainsDeckMulti,destinationsDeck);
             obj.verifyEqual(player.trainCardsHand,[TrainCard("multicolored")], "Claim route with multicolored");
-            obj.verifyEqual(player.victoryPoints,10,"Claim route with blue");
+            obj.verifyEqual(player.victoryPoints,10,"Claim route with multicolored");
 
             rules.action=2;
             player.takeTurn(rules,board,trainsDeckMulti,destinationsDeck);
