@@ -48,6 +48,9 @@ classdef Game
             % Play game until rules say it's over
             while ~gameOver
                turnCount = turnCount + (playerIx==1)
+               if turnCount > 100
+                   help
+               end
                game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck);   
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();

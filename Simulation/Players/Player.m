@@ -1,4 +1,4 @@
-classdef Player < handle
+classdef Player < handle & matlab.mixin.Heterogeneous
     %Player Base class
     %   Abstract class for player agents. Subclasses can override 
 
@@ -66,13 +66,6 @@ classdef Player < handle
             end
 
         end
-      
-    end
-
-    methods (Sealed=true)
-        function addToVictoryPoints(player, points)
-            player.victoryPoints = player.victoryPoints+points;
-        end
 
         function initPlayer(player, startingHand, board, destinationsDeck)
             %initPlayer Get starting hand and choose destination cards
@@ -87,7 +80,17 @@ classdef Player < handle
             player.drawDestinations(board, destinationsDeck);
             player.trainCardsHand = startingHand;
         end
+      
     end
+
+    methods (Sealed=true)
+        function addToVictoryPoints(player, points)
+            player.victoryPoints = player.victoryPoints+points;
+        end
+
+        
+    end
+
 
     methods (Abstract)
         [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);

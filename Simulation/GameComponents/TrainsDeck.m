@@ -149,7 +149,7 @@ classdef TrainsDeck < handle
                 card TrainCard
             end
 
-            if drawable(obj)
+            
 
 
                 % get index of card in face up pile
@@ -167,16 +167,18 @@ classdef TrainsDeck < handle
                     % Return the face-up card specified by the Player 
                     % via the cardIndex argument
                     card = obj.faceUpCards(cardIndex);
-                    obj.faceUpCards(cardIndex) = [];          
-                    obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
-                    obj.drawPile(1) = [];
+                    obj.faceUpCards(cardIndex) = [];    
+                    if obj.drawable()
+                        obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
+                        obj.drawPile(1) = [];
+                    end
     
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. Then, make sure to check for valid face up
                     % cards (< maxMulticoloredFaceUpAllowed).
                     checkDrawPile(obj, 1);
                     obj.addAndCheckFaceUpCards();
-                elseif(cardIndex < 0)
+                elseif(cardIndex < 0 && obj.drawable())
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
                     card = obj.drawPile(1); 
@@ -189,10 +191,6 @@ classdef TrainsDeck < handle
                     disp("Index given for drawing a card from the draw " + ...
                         "pile or face-up cards was out of range.")
                 end
-
-            else
-                disp("The player cannot draw a card.")            
-            end
         end
 
         function card = dealCard(obj)
@@ -228,9 +226,6 @@ classdef TrainsDeck < handle
             cards = obj.faceUpCards;
         end
         
-    end % public methods
-
-    methods (Access = private)
         %% Private Helper Functions
         % used mainly for running the TrainDeck class and doing 
         % internal checking of the TrainDeck state. These are not to be 
