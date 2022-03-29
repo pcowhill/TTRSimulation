@@ -179,20 +179,6 @@ classdef Rules < handle
                         end
 
                         longestRoute=Rules.recursiveAddCycles(longestRoute,edgepaths{pathIx}, cycles, cycleEdges,paths{pathIx}, connectedGraph);
-
-%                         for nodeIx=1:length(paths{pathIx})
-%                             %check if we can add any cycle to the path
-%                             for cycleIx=1:length(cycles)
-%                                 edges = edgepaths{pathIx};
-%                                 if any(ismember(cycles{cycleIx}, paths{pathIx}{nodeIx}))      
-%                                     edges = [cycleEdges{cycleIx} edges];
-%                                     if length(unique(edges)) ==  length(edges)
-%                                         longestRoute = max(longestRoute,...
-%                                             sum(connectedGraph.Edges.Length(edges)));
-%                                     end
-%                                 end
-%                             end
-%                         end
                     end
                 end
             end

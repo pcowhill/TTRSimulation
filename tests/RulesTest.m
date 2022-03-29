@@ -17,6 +17,9 @@ classdef RulesTest < matlab.unittest.TestCase
         ROUTE_NEW_YORK_TO_PITTSBURGH_A
         ROUTE_NASHVILLE_TO_PITTSBURGH
         ROUTE_ATLANTA_TO_NEW_ORLEANS_A
+        ROUTE_MIAMI_TO_NEW_ORLEANS
+        ROUTE_HOUSTON_TO_NEW_ORLEANS
+        ROUTE_LITTLE_ROCK_TO_NEW_ORLEANS
     end
     
     methods(TestMethodSetup)
@@ -32,6 +35,9 @@ classdef RulesTest < matlab.unittest.TestCase
             obj.ROUTE_NEW_YORK_TO_PITTSBURGH_A = Route(Location.New_York, Location.Pittsburgh, Color.white, 2);
             obj.ROUTE_NASHVILLE_TO_PITTSBURGH = Route(Location.Nashville, Location.Pittsburgh, Color.yellow, 4);
             obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A = Route(Location.Atlanta, Location.New_Orleans, Color.orange, 4);
+            obj.ROUTE_MIAMI_TO_NEW_ORLEANS = Route(Location.Miami, Location.New_Orleans, Color.red, 6);
+            obj.ROUTE_HOUSTON_TO_NEW_ORLEANS = Route(Location.Houston, Location.New_Orleans, Color.gray, 2);
+            obj.ROUTE_LITTLE_ROCK_TO_NEW_ORLEANS = Route(Location.Houston, Location.New_Orleans, Color.green, 3);
             
     
             obj.board = Board(obj.ROUTE_ATLANTA_TO_CHARLESTON, ... %gray 2
@@ -44,7 +50,10 @@ classdef RulesTest < matlab.unittest.TestCase
                 obj.ROUTE_DENVER_TO_OMAHA, ... %purple 4
                 obj.ROUTE_NEW_YORK_TO_PITTSBURGH_A,...%white 2
                 obj.ROUTE_NASHVILLE_TO_PITTSBURGH, ...%yellow 4
-                obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A...%orange 4
+                obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A,...%orange 4
+                obj.ROUTE_MIAMI_TO_NEW_ORLEANS,...%red 6
+                obj.ROUTE_HOUSTON_TO_NEW_ORLEANS,...%gray 2
+                obj.ROUTE_LITTLE_ROCK_TO_NEW_ORLEANS...% green 3
             );
             
             
@@ -59,6 +68,7 @@ classdef RulesTest < matlab.unittest.TestCase
             % GetClaimableRoutesTest
             % Checks that claimable routes are returned correctly
             obj.board.claim(obj.ROUTE_MONTREAL_TO_NEW_YORK, Color.red);
+            obj.board.claim(obj.ROUTE_HOUSTON_TO_NEW_ORLEANS, Color.green);
 
             trainsDeck = TrainsDeck(int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1),int8(1));
             destinationsDeck = DestinationsDeck(DestinationTicketCard("Atlanta","Charleston",0));
@@ -164,21 +174,38 @@ classdef RulesTest < matlab.unittest.TestCase
             obj.board.claim(obj.ROUTE_DENVER_TO_OMAHA, Color.yellow);
             obj.board.claim(obj.ROUTE_NEW_YORK_TO_PITTSBURGH_A, Color.yellow);
             obj.board.claim(obj.ROUTE_NASHVILLE_TO_PITTSBURGH, Color.yellow);
+            obj.board.claim(obj.ROUTE_MIAMI_TO_NEW_ORLEANS, Color.yellow);
             longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
-            obj.verifyEqual(longestRouteLengths, [15 10], "All routes claimed");
+            obj.verifyEqual(longestRouteLengths, [15 10], "Routes claimed");
 
-            obj.board.claim(obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A, Color.yellow);
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A, Color.gray);
             longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
             obj.verifyEqual(longestRouteLengths, [11 10], "Cycle");
 
+
             obj.board.claim(obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A, Color.red);
-            obj.board.claim(obj.ROUTE_ATLANTA_TO_MIAMI, Color.yellow);
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_MIAMI, Color.gray);
             longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
             obj.verifyEqual(longestRouteLengths, [10 10], "Un-Cycle");
 
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_MIAMI, Color.gray);
             obj.board.claim(obj.ROUTE_DENVER_TO_KANSAS_CITY_A, Color.red);
             longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
             obj.verifyEqual(longestRouteLengths, [10 9], "Broken path");
+
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_MIAMI, Color.red);
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A, Color.red);
+            obj.board.claim(obj.ROUTE_MIAMI_TO_NEW_ORLEANS, Color.red);
+            longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
+            obj.verifyEqual(longestRouteLengths, [21 9], "Double Cycle");
+
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_MIAMI, Color.red);
+            obj.board.claim(obj.ROUTE_ATLANTA_TO_NEW_ORLEANS_A, Color.red);
+            obj.board.claim(obj.ROUTE_MIAMI_TO_NEW_ORLEANS, Color.red);
+            obj.board.claim(obj.ROUTE_HOUSTON_TO_NEW_ORLEANS, Color.red);
+            obj.board.claim(obj.ROUTE_LITTLE_ROCK_TO_NEW_ORLEANS, Color.red);
+            longestRouteLengths = rules.getLongestRouteTest(obj.board, players);
+            obj.verifyEqual(longestRouteLengths, [26 9], "Double Cycle with tails");
 
         end
     end
