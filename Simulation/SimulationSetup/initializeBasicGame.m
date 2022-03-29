@@ -10,7 +10,7 @@ function game = initializeBasicGame(args)
     players=Player.empty;
     players(1) = LongRoutePlayer(1, 1, 0, 0);
     for ix=2:nPlayers
-        players(ix) = DestinationTicketPlayer(ix,1,0,1);
+        players(ix) = DestinationTicketPlayer(ix,0,0,1);
 %         players(ix) = DummyPlayer(ix);
     end
 
