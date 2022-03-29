@@ -32,7 +32,7 @@ classdef RulesStub < Rules
         end
 
         function ticketsCompleted=getTicketsCompletedTest(rules,board,player)
-            ticketsCompleted=getTicketsCompleted(rules,board,player);
+            ticketsCompleted=Rules.getTicketsCompleted(board,player);
         end
 
         function longestRouteLengths=getLongestRouteTest(rules,board,players)

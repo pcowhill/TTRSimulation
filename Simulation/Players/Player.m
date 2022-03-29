@@ -21,7 +21,7 @@ classdef Player < handle
     methods (Access = public)
         function player = Player(playerNumber)
             %Player Construct a player
-            %   Assign color and choose destination cards
+            %   Assign color
             player.color = Player.PlayerColors(playerNumber);
         end
 
@@ -40,24 +40,26 @@ classdef Player < handle
             end
             routesClaimed = Route.empty;
             cardsDrawn = TrainCard.empty;
-            drawnDestinations = 0;
+            destinationsDrawn=false;
             turnOver = false;
 
             while ~turnOver
-                [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations);
-                if isempty(claimableRoutes) && isempty(drawableCards) && ~drawDestinationCards
+                [claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards] = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, destinationsDrawn);
+                if isempty(claimableRoutes) && isempty(drawableCards) && ~canDrawDestinationCards
                     turnOver = true;
                 else
-                    [route, card, destinations] = player.chooseAction(board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards);
+                    [route, card, drawDestinationCards] = player.chooseAction(board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
                     if route > 0
                         player.claimRoute(rules, board, trainsDeck, claimableRoutes(route), claimableRouteColors(route));
+                        routesClaimed=[routesClaimed route];
                     elseif card > 0
                         cardsDrawn = [cardsDrawn drawableCards(card)];
                         player.drawTrainCard(trainsDeck, drawableCards(card));
                     elseif destinations
+                        destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck);
                     end
-                    if rules.isTurnOver(claimableRoutes, drawableCards, drawDestinationCards, route, card, destinations)
+                    if rules.isTurnOver(claimableRoutes, drawableCards, canDrawDestinationCards, routesClaimed, cardsDrawn, drawDestinationCards)
                         turnOver = true;
                     end
                 end
@@ -73,6 +75,7 @@ classdef Player < handle
         end
 
         function initPlayer(player, startingHand, board, destinationsDeck)
+            %initPlayer Get starting hand and choose destination cards
             arguments
                 player Player
                 startingHand TrainCard
@@ -87,7 +90,7 @@ classdef Player < handle
     end
 
     methods (Abstract)
-        [route, card, destination] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards);
+        [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
         %chooseAction Returns [index of route to claim, index of card to
         % draw, whether to draw destination tickets] only one action will
         % be taken

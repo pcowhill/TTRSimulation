@@ -89,15 +89,6 @@ classdef Rules < handle
                 end
 
                 nTrainsLeft = rules.startingTrains - board.getNumOfTrains(player.color);
-
-                % Commented out a different implementation which was slower
-%                 for ix=1:length(colorCounts)
-%                     colorRoutes = unclaimedRoutes(and(and([unclaimedRoutes.length]<=colorCounts(ix)+colorCounts(multicoloredIx),...
-%                         [unclaimedRoutes.length]<=nTrainsLeft),...
-%                         or([unclaimedRoutes.color]==colors(ix),[unclaimedRoutes.color]==Color.gray)));
-%                     claimableRoutes = [claimableRoutes colorRoutes];
-%                     claimableRouteColors = [claimableRouteColors repmat(colors(ix),1,length(colorRoutes))];
-%                 end
                 
                 for ix=1:length(unclaimedRoutes)
                     route = unclaimedRoutes(ix);
@@ -120,13 +111,19 @@ classdef Rules < handle
                                 claimableRoutes(end+1) = route;
                                 claimableRouteColors(end+1) = route.color;
                             end
+                            if colorCounts(multicoloredIx)>=route.length
+                                claimableRoutes(end+1)=route;
+                                claimableRouteColors(end+1)=Color.multicolored;
+                            end
                         end
                     end
                 end
             end        
         end
 
-        function ticketsCompleted = getTicketsCompleted(rules, board, player)
+    end
+    methods(Static)
+        function ticketsCompleted = getTicketsCompleted(board, player)
             %getTicketsCompleted
             
             % make graph of only player owned edges
@@ -136,12 +133,12 @@ classdef Rules < handle
             for destIx = 1:length(destinationTickets)
                 % first we check if the nodes of the ticket are present
                 % in the player's graph
-                if any(contains(playerGraph.Nodes.Name, destinationTickets(destIx).firstLocation.string())) && ...
-                        any(contains(playerGraph.Nodes.Name, destinationTickets(destIx).secondLocation.string()))
+                if any(ismember(playerGraph.Nodes.Name, destinationTickets(destIx).firstLocation.string())) && ...
+                        any(ismember(playerGraph.Nodes.Name, destinationTickets(destIx).secondLocation.string()))
                     % find paths betweent the nodes in the player's
                     % graph
                     paths = allpaths(playerGraph, destinationTickets(destIx).firstLocation.string(), ...
-                       destinationTickets(destIx).secondLocation.string());
+                       destinationTickets(destIx).secondLocation.string(),'MaxNumPaths',1);
                     if ~isempty(paths)
                         %at least 1 path exists, ticket is complete
                         ticketsCompleted(destIx) = true;
@@ -150,59 +147,101 @@ classdef Rules < handle
             end
         end
 
-        function longestRouteLengths = getLongestRoute(rules, board, players)
+        function longestRoute = getPlayerLongestRoute(playerGraph)
+            % Separate graph into connected components to find longest
+            % path. We simply iterate through every possible path in
+            % each connected graph to find the longest one
+            bins = conncomp(playerGraph);
+            longestRoute = 0;
+            for binIx=1:max(bins)
+                connectedGraph = subgraph(playerGraph, playerGraph.Nodes.Name(bins==binIx));
+                nNodes = height(connectedGraph.Nodes);
+
+                % get all pairings of nodes in the connected graph
+                nodeCombos = nchoosek(1:nNodes, 2);
+                nodeCombos = [repmat(transpose(1:nNodes),1,2); nodeCombos];
+
+                %allpaths doesn't account for cycles
+                [cycles, cycleEdges] = allcycles(connectedGraph);
+                
+
+                for comboIx=1:height(nodeCombos)
+                    % get all paths between the nodes
+                    [paths, edgepaths] = allpaths(connectedGraph, connectedGraph.Nodes.Name(nodeCombos(comboIx,1)), connectedGraph.Nodes.Name(nodeCombos(comboIx,2)));
+
+                    for pathIx=1:length(paths)
+                        edges = edgepaths{pathIx};
+                        % if no edges are repeated, this could be a
+                        % longest route
+                        if length(unique(edges)) ==  length(edges)
+                            longestRoute = max(longestRoute,...
+                                sum(connectedGraph.Edges.Length(edges)));
+                        end
+
+                        longestRoute=Rules.recursiveAddCycles(longestRoute,edgepaths{pathIx}, cycles, cycleEdges,paths{pathIx}, connectedGraph);
+
+%                         for nodeIx=1:length(paths{pathIx})
+%                             %check if we can add any cycle to the path
+%                             for cycleIx=1:length(cycles)
+%                                 edges = edgepaths{pathIx};
+%                                 if any(ismember(cycles{cycleIx}, paths{pathIx}{nodeIx}))      
+%                                     edges = [cycleEdges{cycleIx} edges];
+%                                     if length(unique(edges)) ==  length(edges)
+%                                         longestRoute = max(longestRoute,...
+%                                             sum(connectedGraph.Edges.Length(edges)));
+%                                     end
+%                                 end
+%                             end
+%                         end
+                    end
+                end
+            end
+        end
+
+        function longestRoute = recursiveAddCycles(longestRouteIn, edges, cycles, cycleEdges, path, connectedGraph)
+            longestRoute = longestRouteIn;
+            for nodeIx=1:length(path)
+                %check if we can add any cycle to the path
+                for cycleIx=1:length(cycles)
+                    cycleInPath=ismember(cycles{cycleIx}, path{nodeIx});
+                    if any(cycleInPath)      
+                        connectionNodeIx = find(cycleInPath);
+                        newPath={cycles{cycleIx}{connectionNodeIx:end}};                        
+                        if connectionNodeIx > 1
+                            newPath=horzcat(newPath, cycles{cycleIx}{1:connectionNodeIx});
+                        end
+                        newPath=horzcat(newPath, path{nodeIx:end});
+                        if nodeIx>1
+                            newPath=horzcat(path{1:nodeIx}, newPath);
+                        end
+
+                        newEdges = [cycleEdges{cycleIx} edges];
+                        if length(unique(newEdges)) ==  length(newEdges)
+                            longestRoute = max(longestRoute,...
+                                sum(connectedGraph.Edges.Length(newEdges)));
+                            newCycles=cycles;
+                            newCycleEdges=cycleEdges;
+                            newCycles(cycleIx,:) = [];
+                            newCycleEdges(cycleIx,:)=[];
+                            if ~isempty(newCycles) && ~isempty(newCycleEdges)
+                                % check if we can add any cycles to this
+                                % new longest route
+                                longestRoute=Rules.recursiveAddCycles(longestRoute, newEdges, newCycles, newCycleEdges, newPath, connectedGraph);
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+
+        function longestRouteLengths = getLongestRoute(board, players)
             %getLongestRoute
             longestRouteLengths = [];
             for playerIx = 1:length(players)
                 % make graph of only player owned edges
                 playerGraph = graph(board.routeGraph.Edges(board.routeGraph.Edges.Owner==players(playerIx).color, :));
-                
-                % Separate graph into connected components to find longest
-                % path. We simply iterate through every possible path in
-                % each connected graph to find the longest one
-                bins = conncomp(playerGraph);
-                longestRouteLengths(playerIx) = 0;
-                for binIx=1:max(bins)
-                    connectedGraph = subgraph(playerGraph, playerGraph.Nodes.Name(bins==binIx));
-                    nNodes = height(connectedGraph.Nodes);
-
-                    % get all pairings of nodes in the connected graph
-                    nodeCombos = nchoosek(1:nNodes, 2);
-                    nodeCombos = [repmat(transpose(1:nNodes),1,2); nodeCombos];
-
-                    %allpaths doesn't account for cycles
-                    [cycles, cycleEdges] = allcycles(connectedGraph);
-                    
-
-                    for comboIx=1:height(nodeCombos)
-                        % get all paths between the nodes
-                        [paths, edgepaths] = allpaths(connectedGraph, connectedGraph.Nodes.Name(nodeCombos(comboIx,1)), connectedGraph.Nodes.Name(nodeCombos(comboIx,2)));
-
-                        for pathIx=1:length(paths)
-                            edges = edgepaths{pathIx};
-                            % if no edges are repeated, this could be a
-                            % longest route
-                            if length(unique(edges)) ==  length(edges)
-                                longestRouteLengths(playerIx) = max(longestRouteLengths(playerIx),...
-                                    sum(connectedGraph.Edges.Length(edges)));
-                            end
-
-                            for nodeIx=1:length(paths{pathIx})
-                                %check if we can add any cycle to the path
-                                for cycleIx=1:length(cycles)
-                                    edges = edgepaths{pathIx};
-                                    if any(contains(cycles{cycleIx}, paths{pathIx}{nodeIx}))      
-                                        edges = [cycleEdges{cycleIx} edges];
-                                        if length(unique(edges)) ==  length(edges)
-                                            longestRouteLengths(playerIx) = max(longestRouteLengths(playerIx),...
-                                                sum(connectedGraph.Edges.Length(edges)));
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end       
-                end
+                longestRouteLengths(playerIx) = Rules.getPlayerLongestRoute(playerGraph);
             end
         end
     end
