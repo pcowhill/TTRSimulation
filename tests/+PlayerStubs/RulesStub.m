@@ -33,8 +33,8 @@ classdef RulesStub < Rules
             end
         end
 
-        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, route, card, destinations)
-            over = route > 0 || card > 0 || destinations;
+        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, routesClaimed, cardsDrawn, destinations)
+            over = ~isempty(routesClaimed) || ~isempty(cardsDrawn) || destinations;
         end
 
         function points = getRoutePoints(rules, route)
