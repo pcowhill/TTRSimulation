@@ -51,15 +51,15 @@ classdef Player < handle
                     [route, card, drawDestinationCards] = player.chooseAction(board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
                     if route > 0
                         player.claimRoute(rules, board, trainsDeck, claimableRoutes(route), claimableRouteColors(route));
-                        routesClaimed=[routesClaimed route];
+                        routesClaimed=[routesClaimed claimableRoutes(route)];
                     elseif card > 0
                         cardsDrawn = [cardsDrawn drawableCards(card)];
                         player.drawTrainCard(trainsDeck, drawableCards(card));
-                    elseif destinations
+                    elseif drawDestinationCards
                         destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck);
                     end
-                    if rules.isTurnOver(claimableRoutes, drawableCards, canDrawDestinationCards, routesClaimed, cardsDrawn, drawDestinationCards)
+                    if rules.isTurnOver(claimableRoutes, drawableCards, canDrawDestinationCards, routesClaimed, cardsDrawn, destinationsDrawn)
                         turnOver = true;
                     end
                 end

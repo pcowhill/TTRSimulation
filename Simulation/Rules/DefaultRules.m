@@ -62,7 +62,7 @@ classdef DefaultRules < Rules
         function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, claimedRoutes, drawnCards, destinationsDrawn)
             % if the player claimed a route, drew a multiclor card, or drew
             % destination cards, their turn is over
-            over = ~isempty(claimedRoutes) || (drawnCards(end).color == Color.multicolored) || destinationsDrawn;
+            over = ~isempty(claimedRoutes) || (length(drawnCards) > 0 && (drawnCards(end).color == Color.multicolored)) || destinationsDrawn;
         end
 
         function points = getRoutePoints(rules, route)
