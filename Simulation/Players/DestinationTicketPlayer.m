@@ -28,7 +28,7 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
         end
 
         function drawCards = shouldDrawDestinationCards(player,board)
-            if all(player.destinationsCompleted) && player.potentialDiscount >= 0.9
+            if all(player.destinationsCompleted) && player.potentialDiscount >= 0.8
                 drawCards = 1;
             else
                 drawCards=0;
