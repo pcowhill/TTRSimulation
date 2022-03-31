@@ -107,8 +107,8 @@ classdef RulesTest < matlab.unittest.TestCase
                 [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
                     rules.getPossibleActions(player, obj.board, trainsDeck, destinationsDeck, ...
                     Route.empty, TrainCard.empty, 0);
-                obj.verifyTrue(length(claimableRoutes)==length(expectedRoutes),diagnostic);
-                obj.verifyTrue(length(claimableRouteColors)==length(expectedColors),diagnostic);
+                obj.verifyEqual(length(claimableRoutes),length(expectedRoutes),diagnostic);
+                obj.verifyEqual(length(claimableRouteColors),length(expectedColors),diagnostic);
                 for ix=1:length(expectedRoutes)
                     found = false;
                     for rIx=1:length(claimableRoutes)

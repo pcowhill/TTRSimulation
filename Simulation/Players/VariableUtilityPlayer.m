@@ -223,7 +223,7 @@ classdef VariableUtilityPlayer < Player
 
         function getColorUtilities(player, unclaimedRoutes)
             colors = enumeration('Color');
-            colors(colors == Color.unknown) = [];
+            colors(or(colors == Color.unknown, colors==Color.gray)) = [];
             player.colorUtilities = containers.Map(colors.string,zeros(length(colors),1));
             grayUtility = 0;
             
