@@ -5,31 +5,39 @@ classdef DummyPlayer < Player
 
 
     methods (Access = public)
-        function obj = DummyPlayer(color, trainsDeck, destinationsDeck)
-            arguments
-                color Color
-                trainsDeck TrainsDeck
-                destinationsDeck DestinationsDeck
-            end
-            obj@Player(color, trainsDeck, destinationsDeck);
+        function obj = DummyPlayer(playerNumber)
+            obj@Player(playerNumber);
         end
 
-        function [route, card, destination] = chooseActionImpl(player, board, claimableRoutes, drawableCards, drawDestinationCards)
+        function [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards)
+            arguments
+                player Player
+                board Board
+                claimableRoutes Route
+                claimableRouteColors Color
+                drawableCards TrainCard
+                canDrawDestinationCards
+            end
             if ~isempty(claimableRoutes)
                 % claim longest claimable route
                 [~, sortedIndices] = sort([claimableRoutes.length], 'descend');
                 route = sortedIndices(1);
                 card = 0;
-                destination = 0;
+                drawDestinationCards = false;
             else
                 route = 0;
                 % draw random cards
                 card = length(drawableCards);
-                destination = 0;
+                drawDestinationCards = false;
             end
         end
 
-        function keptCardIndices = chooseDestinationCardsImpl(player, board, destinationCards)
+        function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
+            arguments
+                player Player
+                board Board
+                destinationCards DestinationTicketCard
+            end
             keptCardIndices = 1;
         end
     end

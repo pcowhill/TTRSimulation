@@ -6,9 +6,9 @@ classdef Game
     properties(SetAccess=private)
         board Board
 
-        players Player
+        players
 
-        rules Rules
+        rules
 
         trainsDeck TrainsDeck
 
@@ -33,26 +33,29 @@ classdef Game
         end
         
         function results = simulateGame(game)
-           % Set up the game components
-           game.rules.initGameState()
-           game.destinationsDeck.init();
-           game.board.init();
-           startingCards = game.trainsDeck.init(length(game.players)*game.rules.startingCards);
-           for playerIndex = 1:length(game.players)
-               game.players(playerIndex).initPlayer(startingCards(playerIndex : length(game.players) : end));
-           end
-
-           gameOver = false;
-           playerIndex = 1;
-           % Play game until rules say it's over
-           while ~gameOver
-               game.players(playerIndex).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck);   
-               game.rules.udpateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
+            % Set up the game components
+            game.rules.initGameState()
+            game.destinationsDeck.init();
+            game.board.init();
+            startingCards = game.trainsDeck.init(length(game.players)*game.rules.nStartingCards, game.rules.nFaceUpCards, game.rules.nMulticoloredAllowed);
+            for playerIx = 1:length(game.players)
+               game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck);
+            end
+            
+            gameOver = false;
+            playerIx = 1;
+            turnCount = 0;
+            % Play game until rules say it's over
+            while ~gameOver
+               turnCount = turnCount + (playerIx==1)
+               game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck);   
+               game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
-               playerIndex = playerIndex + 1;
-           end
-
-           % apply destination ticket and longest route victory points
+               playerIx = mod(playerIx, length(game.players))+1;
+            end
+            
+            game.rules.updateEndgameScores(game.board, game.players);
+            finalScores=[game.players.victoryPoints]
 
            % metrics stuff?
             

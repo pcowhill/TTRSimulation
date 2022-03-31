@@ -9,7 +9,7 @@ classdef BoardTest < matlab.unittest.TestCase
     
     methods(TestMethodSetup)
         function createBoard(obj)
-            initializeBoard;
+            BaseBoard.initializeBoard;
             obj.theBoard = BOARD;
         end
     end
@@ -23,7 +23,7 @@ classdef BoardTest < matlab.unittest.TestCase
             % Ensures reseting the owners of Board via init works properly
 
             % Add color and route names
-            initializeRoutes;
+            BaseBoard.initializeRoutes;
             initializeColors;
 
             % Reset the ownership map
@@ -57,7 +57,7 @@ classdef BoardTest < matlab.unittest.TestCase
 
             % Add color and route names
             addpath('..')
-            initializeRoutes;
+            BaseBoard.initializeRoutes;
             initializeColors;
 
             % Check that certain routes are not owned

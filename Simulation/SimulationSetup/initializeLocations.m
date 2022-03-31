@@ -32,7 +32,7 @@ if ~exist('INITIALIZE_LOCATIONS_M', 'var')
     OKLAHOMA_CITY = Location.Oklahoma_City;
     OMAHA = Location.Omaha;
     PHOENIX = Location.Phoenix;
-    PITTSBURG = Location.Pittsburg;
+    PITTSBURGH = Location.Pittsburgh;
     PORTLAND = Location.Portland;
     RALEIGH = Location.Raleigh;
     SAINT_LOUIS = Location.Saint_Louis;

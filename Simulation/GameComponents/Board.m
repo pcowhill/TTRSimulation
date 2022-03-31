@@ -141,7 +141,7 @@ classdef Board < handle
             % Set the current owner of the route to the player color
             edgeIndex = find(obj.routeGraph.Edges.('id') == route.id);
 
-            obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB> 
+            obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB>
         end
 
         function obj = resetRouteOwners(obj)
@@ -154,14 +154,14 @@ classdef Board < handle
             %getNumOfTrains Get the number of trains on the board of the
             %given color
 
-            numTrains = 0;
+            numTrains = sum(board.routeGraph.Edges.Length(board.routeGraph.Edges.Owner==color));
+        end
 
-            numRoutes = length(board.initialRoutes);
-            for iRoute = 1:numRoutes
-                if board.routeGraph.Edges.('Owner')(iRoute) == color
-                    numTrains = numTrains + board.routeGraph.Edges.('Length')(iRoute);
-                end
-            end
+        function unclaimedRoutes = getUnclaimedRoutes(board)
+            unclaimedEdges = board.routeGraph.Edges.Owner==Color.gray;
+            routeIds = board.routeGraph.Edges.id(unclaimedEdges);
+            [~,cols] = find(routeIds==[board.initialRoutes.id]);
+            unclaimedRoutes = board.initialRoutes(cols);
         end
     end
 end
