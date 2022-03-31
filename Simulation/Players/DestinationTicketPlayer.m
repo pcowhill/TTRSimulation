@@ -4,8 +4,8 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
 
 
     methods (Access = public)
-        function obj = DestinationTicketPlayer(playerNumber, lengthWeight, longestRouteWeight, destinationTicketWeight)
-            obj@VariableUtilityPlayer(playerNumber, lengthWeight, longestRouteWeight, destinationTicketWeight);
+        function obj = DestinationTicketPlayer(playerNumber)
+            obj@VariableUtilityPlayer(playerNumber, 0.1, 1);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
@@ -16,11 +16,19 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
             end
             % choose largest point value
             [~, sortedIndices] = sort([destinationCards.pointValue], 'descend');
-            keptCardIndices=sortedIndices(1);
+            
+            % if it's the beginning of the game, take all cards
+            if isempty(player.destinationCardsHand) && length(destinationCards) > 1
+                keptCardIndices=sortedIndices;
+            else
+                % keep highest point value
+                keptCardIndices=sortedIndices(1);
+            end
+            
         end
 
         function drawCards = shouldDrawDestinationCards(player,board)
-            if all(player.destinationsCompleted)
+            if all(player.destinationsCompleted) && player.potentialDiscount >= 0.9
                 drawCards = 1;
             else
                 drawCards=0;

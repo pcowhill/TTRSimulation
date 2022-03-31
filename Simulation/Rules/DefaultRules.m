@@ -89,8 +89,9 @@ classdef DefaultRules < Rules
         end
 
         function updateGameState(rules, board, players, trainsDeck, destinationsDeck)
+            playerTrains=Rules.getPlayerTrains(board, players, rules.startingTrains);
             for p = 1:length(players)
-                if rules.startingTrains - board.getNumOfTrains(players(p).color) <= 2
+                if  playerTrains(p) <= 2
                     % if a player has two or less trains remaining,
                     % everyone gets one more turn before the game is over
                     if rules.turnsRemaining == -1

@@ -16,6 +16,10 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         destinationCardsHand DestinationTicketCard = DestinationTicketCard.empty
 
         victoryPoints = 0
+
+        nStartingTrains = 0
+
+        allPlayers
     end
 
     methods (Access = public)
@@ -67,20 +71,6 @@ classdef Player < handle & matlab.mixin.Heterogeneous
 
         end
 
-        function initPlayer(player, startingHand, board, destinationsDeck)
-            %initPlayer Get starting hand and choose destination cards
-            arguments
-                player Player
-                startingHand TrainCard
-                board Board
-                destinationsDeck DestinationsDeck
-            end
-            player.destinationCardsHand = DestinationTicketCard.empty;
-            player.victoryPoints = 0;
-            player.drawDestinations(board, destinationsDeck);
-            player.trainCardsHand = startingHand;
-        end
-      
     end
 
     methods (Sealed=true)
@@ -99,6 +89,30 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         % be taken
         keptCardIndices = chooseDestinationCards(player, board, destinationCards);
         %chooseDestinationCards returns the indices of the cards to keep
+
+        initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains);
+    end
+
+    methods (Sealed=true)
+        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players)
+            %initPlayer Get starting hand and choose destination cards
+            arguments
+                player Player
+                startingHand TrainCard
+                board Board
+                destinationsDeck DestinationsDeck
+                nStartingTrains
+                players
+            end
+            player.destinationCardsHand = DestinationTicketCard.empty;
+            player.victoryPoints = 0;
+            player.drawDestinations(board, destinationsDeck);
+            player.trainCardsHand = startingHand;
+            player.nStartingTrains=nStartingTrains;
+            player.allPlayers = players;
+
+            player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
+        end
     end
 
 

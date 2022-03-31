@@ -1,4 +1,4 @@
-classdef VariableUtilityPlayer < Player
+classdef VariableUtilityPlayer < Player 
     %Long Route Player class
     %   Player that is just trying to claim long routes.
 
@@ -7,17 +7,16 @@ classdef VariableUtilityPlayer < Player
 
         routeUtilities
         colorUtilities
-        initialRouteUtilities
-
-
-        lengthWeight = 1
-        longestRouteWeight=0
-        destinationTicketWeight = 0
+        
         potentialDiscount = 1
 
         checkDestinations
 
+    end
 
+    properties (SetAccess=immutable)
+        lengthWeight = 1
+        destinationTicketWeight = 1
     end
 
     methods(Abstract)
@@ -26,21 +25,20 @@ classdef VariableUtilityPlayer < Player
 
 
     methods (Access = public)
-        function obj = VariableUtilityPlayer(playerNumber, lengthWeight, longestRouteWeight, destinationTicketWeight)
+        function obj = VariableUtilityPlayer(playerNumber, lengthWeight, destinationTicketWeight)
             obj@Player(playerNumber);
             obj.lengthWeight = lengthWeight;
-            obj.longestRouteWeight = longestRouteWeight;
             obj.destinationTicketWeight = destinationTicketWeight;
         end
 
-        function initPlayer(player, startingHand, board, destinationsDeck)
+        function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)
             arguments
                 player Player
                 startingHand TrainCard
                 board Board
                 destinationsDeck DestinationsDeck
+                nStartingTrains
             end
-            initPlayer@Player(player, startingHand, board, destinationsDeck);
             player.checkDestinations=false;
             player.destinationsCompleted =zeros(1,length(player.destinationCardsHand));
         end
@@ -54,6 +52,13 @@ classdef VariableUtilityPlayer < Player
                 drawableCards TrainCard
                 drawDestinationCards
             end
+
+            % potential discount is based on number of trains players have
+            % left
+            playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
+            player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
+            disp(player.potentialDiscount);
+
             destination=0;
             if player.checkDestinations
                 player.destinationsCompleted=Rules.getTicketsCompleted(board, player);
@@ -110,6 +115,7 @@ classdef VariableUtilityPlayer < Player
                         card=ix;                       
                     end
                 end
+                %draw a card if no other actions provide utility
                 if route==0 && card==0 && destination==0
                     card=length(drawableCards);
                 end
@@ -151,8 +157,8 @@ classdef VariableUtilityPlayer < Player
 
         function getUtilityValues(player, board)
             unclaimedRoutes = board.getUnclaimedRoutes();
-            %don't bother calculating utility if no new routes were claimed
-            if length(unclaimedRoutes) ~= height(player.routeUtilities)
+            %don't bother recalculating utility if no new routes were claimed
+            if isempty(player.routeUtilities) || ~all(ismember(player.routeUtilities.id, [unclaimedRoutes.id]))
                 player.getRouteUtilities(board, unclaimedRoutes);
                 player.getColorUtilities(unclaimedRoutes);
             end
@@ -199,13 +205,13 @@ classdef VariableUtilityPlayer < Player
                                 any(ismember(destinationGraph.Nodes.Name, dest.secondLocation.string))
                             [~,d]=shortestpath(destinationGraph,dest.firstLocation.string,dest.secondLocation.string);
                             destGraphCopy=destinationGraph;
-                            e=findedge(destGraphCopy,node1,node2);
+                            e=find(destGraphCopy.Edges.id==route.id);
                             destGraphCopy.Edges.Weight(e)=0;
                             [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
                             %utility is linear based on shortest path
                             %length reduction and destination ticket point
                             %value
-                            util=max(0,(1-newd/d)*dest.pointValue);
+                            util=max(0,(1-newd/d)*dest.pointValue*2);
                             destinationUtility = max(destinationUtility, util);
                         end
                     end
@@ -213,7 +219,6 @@ classdef VariableUtilityPlayer < Player
                             player.destinationTicketWeight*destinationUtility;
                 end
             end
-
         end
 
         function getColorUtilities(player, unclaimedRoutes)
