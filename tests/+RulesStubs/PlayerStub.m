@@ -1,6 +1,6 @@
 classdef PlayerStub < handle
     properties
-        color
+        color = Color.red;
         trainCardsHand TrainCard = TrainCard.empty
     
         destinationCardsHand DestinationTicketCard = DestinationTicketCard.empty

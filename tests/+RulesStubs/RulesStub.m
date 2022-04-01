@@ -30,5 +30,13 @@ classdef RulesStub < Rules
 
         function updateEndgameScores(rules, board, players)
         end
+
+        function ticketsCompleted=getTicketsCompletedTest(rules,board,player)
+            ticketsCompleted=Rules.getTicketsCompleted(board,player);
+        end
+
+        function longestRouteLengths=getLongestRouteTest(rules,board,players)
+            longestRouteLengths=rules.getLongestRoute(board, players);
+        end
     end
 end

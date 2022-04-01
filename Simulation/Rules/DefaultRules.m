@@ -11,7 +11,7 @@ classdef DefaultRules < Rules
             rules.turnsRemaining = -1;
         end
 
-        function [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
+        function [claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards] = ...
                 getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations)
             arguments
                 rules Rules
@@ -30,7 +30,7 @@ classdef DefaultRules < Rules
                 claimableRoutes = Route.empty;
                 claimableRouteColors = Color.empty;
                 drawableCards = TrainCard.empty;
-                drawDestinationCards = 0;
+                canDrawDestinationCards = false;
             else
                 drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
                 if ~isempty(cardsDrawn)
@@ -47,10 +47,10 @@ classdef DefaultRules < Rules
                     % Can only draw a card as second action
                     claimableRoutes = Route.empty;
                     claimableRouteColors = Color.empty;
-                    drawDestinationCards = 0;
+                    canDrawDestinationCards = false;
                 else
                     if destinationsDeck.getNumCardsLeft() > 0
-                        drawDestinationCards = 1;                
+                        canDrawDestinationCards = true;                
                     end
                     [claimableRoutes, claimableRouteColors] = rules.getClaimableRoutes(player, board);
                 end
@@ -59,10 +59,10 @@ classdef DefaultRules < Rules
             end
         end
 
-        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, route, card, destinations)
+        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, claimedRoutes, drawnCards, destinationsDrawn)
             % if the player claimed a route, drew a multiclor card, or drew
             % destination cards, their turn is over
-            over = route > 0 || (card < length(drawableCards) && drawableCards(card).color == Color.MultiColor) || destinations;
+            over = ~isempty(claimedRoutes) || (length(drawnCards) > 0 && (drawnCards(end).color == Color.multicolored)) || destinationsDrawn;
         end
 
         function points = getRoutePoints(rules, route)
@@ -107,12 +107,13 @@ classdef DefaultRules < Rules
 
         function updateEndgameScores(rules, board, players)
             % apply destination ticket and longest route victory points
-            [ticketsCompleted, longestRouteLengths] = getTicketsCompletedAndLongestRoute(rules, board, players);
+           longestRouteLengths = Rules.getLongestRoute(board, players);
 
             for playerIx=1:length(players)
                 destinationTickets = players(playerIx).destinationCardsHand;
+                ticketsCompleted = Rules.getTicketsCompleted(board,players(playerIx));
                 for destIx=1:length(destinationTickets)
-                    if ticketsCompleted{playerIx}(destIx)
+                    if ticketsCompleted(destIx)
                         % add points if ticket was completed
                         players(playerIx).addToVictoryPoints(destinationTickets(destIx).pointValue);
                     else

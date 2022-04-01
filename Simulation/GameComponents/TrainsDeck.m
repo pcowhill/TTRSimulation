@@ -122,7 +122,7 @@ classdef TrainsDeck < handle
             obj.nFaceUpCardsNeeded = inputNFaceUpCards;
             obj.maxMulticoloredFaceUpAllowed = inputNMulticoloredCardsAllowed;
 
-            if drawable(obj) == true          
+            if drawable(obj) == true && obj.nFaceUpCardsNeeded > 0          
             % Add the number of cards that is equal to the allowed # of 
             % multicolored face-up cards. Then, use the addAndCheckFaceUpCards
             % helper function to check that we are not adding too many 

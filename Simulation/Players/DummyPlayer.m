@@ -9,26 +9,26 @@ classdef DummyPlayer < Player
             obj@Player(playerNumber);
         end
 
-        function [route, card, destination] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards)
+        function [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards)
             arguments
                 player Player
                 board Board
                 claimableRoutes Route
                 claimableRouteColors Color
                 drawableCards TrainCard
-                drawDestinationCards
+                canDrawDestinationCards
             end
             if ~isempty(claimableRoutes)
                 % claim longest claimable route
                 [~, sortedIndices] = sort([claimableRoutes.length], 'descend');
                 route = sortedIndices(1);
                 card = 0;
-                destination = 0;
+                drawDestinationCards = false;
             else
                 route = 0;
                 % draw random cards
                 card = length(drawableCards);
-                destination = 0;
+                drawDestinationCards = false;
             end
         end
 
