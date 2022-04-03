@@ -47,8 +47,8 @@ classdef Board < handle
             % represents the cities and routes/connections between them
             % while also tracking information such as route owners and
             % length.
-            routeGraph = graph;
-
+            routeGraph=graph;
+            
             for route = obj.initialRoutes
                 try % This fails if the location is already in the graph
                     routeGraph = routeGraph.addnode(route.locations(1).string());
@@ -69,7 +69,7 @@ classdef Board < handle
         function init(board)
             % init method
             % Sets up the existing Board object for a new game.
-            board.routeGraph = board.initializeRouteGraph();
+            board.resetRouteOwners();
         end
 
         function tf = isOwned(obj, route)
@@ -147,7 +147,8 @@ classdef Board < handle
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
             % Resets the ownership map
-            obj.routeGraph = obj.initializeRouteGraph();
+%             obj.routeGraph = obj.initializeRouteGraph();
+            obj.routeGraph.Edges.Owner(:)=Color.gray;
         end
 
         function numTrains = getNumOfTrains(board, color)

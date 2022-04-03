@@ -19,7 +19,7 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
             
             % if it's the beginning of the game, take all cards
             if isempty(player.destinationCardsHand)
-                keptCardIndices=sortedIndices;
+                keptCardIndices=sortedIndices(1);
             else
                 % keep highest point value
                 keptCardIndices=sortedIndices(1);
