@@ -11,62 +11,61 @@ classdef DefaultRules < Rules
             rules.turnsRemaining = -1;
         end
 
-        function [claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards] = ...
-                getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations)
+        function possibleActions = ...
+                getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, takenActions)
             arguments
                 rules Rules
                 player Player
                 board Board
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
-                routesClaimed Route
-                cardsDrawn TrainCard
-                drawnDestinations
+                takenActions struct
             end
-            if ~isempty(routesClaimed) || length(cardsDrawn) > 1 || drawnDestinations
+
+            possibleActions = struct();
+
+            if ~isempty(takenActions.routesClaimed) || length(takenActions.cardsDrawn) > 1 || takenActions.destinationsDrawn
                 % if the player has drawn two cards, claimed a route or
                 % drawn destination cards, their turn is over and they have
                 % no more possible actions
-                claimableRoutes = Route.empty;
-                claimableRouteColors = Color.empty;
-                drawableCards = TrainCard.empty;
-                canDrawDestinationCards = false;
+                possibleActions.claimableRoutes = Route.empty;
+                possibleActions.claimableRouteColors = Color.empty;
+                possibleActions.drawableCards = TrainCard.empty;
+                possibleActions.canDrawDestinationCards = false;
             else
                 if trainsDeck.drawable()
-                    drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
+                    possibleActions.drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
                 end
 
-                if ~isempty(cardsDrawn)
+                if ~isempty(takenActions.cardsDrawn)
                     %Don't allow the player to draw a locomotive as their
                     %second card
                     indicesToRemove = [];
-                    for cardIndex = 1:length(drawableCards)
-                        if drawableCards(cardIndex).color == Color.multicolored
+                    for cardIndex = 1:length(possibleActions.drawableCards)
+                        if possibleActions.drawableCards(cardIndex).color == Color.multicolored
                             indicesToRemove = [indicesToRemove cardIndex];
                         end
                     end
-                    drawableCards(indicesToRemove) = [];
+                    possibleActions.drawableCards(indicesToRemove) = [];
 
                     % Can only draw a card as second action
-                    claimableRoutes = Route.empty;
-                    claimableRouteColors = Color.empty;
-                    canDrawDestinationCards = false;
+                    possibleActions.claimableRoutes = Route.empty;
+                    possibleActions.claimableRouteColors = Color.empty;
+                    possibleActions.canDrawDestinationCards = false;
                 else
-                    canDrawDestinationCards=false;
+                    possibleActions.canDrawDestinationCards=false;
                     if destinationsDeck.getNumCardsLeft() > 0
-                        canDrawDestinationCards = true;                
+                        possibleActions.canDrawDestinationCards = true;                
                     end
-                    [claimableRoutes, claimableRouteColors] = rules.getClaimableRoutes(player, board);
+                    [possibleActions.claimableRoutes, possibleActions.claimableRouteColors] = rules.getClaimableRoutes(player, board);
                 end
-
-                
             end
         end
 
-        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, claimedRoutes, drawnCards, destinationsDrawn)
+        function over =  isTurnOver(rules, possibleActions, takenActions)
             % if the player claimed a route, drew a multiclor card, or drew
             % destination cards, their turn is over
-            over = ~isempty(claimedRoutes) || (length(drawnCards) > 0 && (drawnCards(end).color == Color.multicolored)) || destinationsDrawn;
+            over = ~isempty(takenActions.routesClaimed) || (~isempty(takenActions.cardsDrawn) && (takenActions.cardsDrawn(end).color == Color.multicolored)) || takenActions.destinationsDrawn;
         end
 
         function points = getRoutePoints(rules, route)

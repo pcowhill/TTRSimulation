@@ -8,33 +8,33 @@ classdef RulesStub < Rules
 
         end
 
-        function [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
-            getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations)
-            drawableCards = TrainCard.empty;
-            drawDestinationCards=0;
-            [claimableRoutes, claimableRouteColors] = rules.getClaimableRoutes(player, board);  
+        function possibleActions = ...
+            getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, takenActions)
+            possibleActions.drawableCards = TrainCard.empty;
+            possibleActions.canDrawDestinationCards=false;
+            [possibleActions.claimableRoutes, possibleActions.claimableRouteColors] = rules.getClaimableRoutes(player, board);  
             switch rules.action
                 case 0
-                    claimableRoutes = [Route(Location.Atlanta, Location.Charleston, Color.blue, 4)];
-                    drawableCards = [];
-                    drawDestinationCards=0;
+                    possibleActions.claimableRoutes = [Route(Location.Atlanta, Location.Charleston, Color.blue, 4)];
+                    possibleActions.drawableCards = [];
+                    possibleActions.canDrawDestinationCards=false;
                 case 1
-                    claimableRoutes = [];
-                    drawableCards = [TrainCard(Color.blue)];
-                    drawDestinationCards=0;
+                    possibleActions.claimableRoutes = [];
+                    possibleActions.drawableCards = [TrainCard(Color.blue)];
+                    possibleActions.canDrawDestinationCards=false;
                 case 2
-                    claimableRoutes = [];
-                    drawableCards = [];
-                    drawDestinationCards=1;
+                    possibleActions.claimableRoutes = [];
+                    possibleActions.drawableCards = [];
+                    possibleActions.canDrawDestinationCards=true;
                 case 3
-                    claimableRoutes = [];
-                    drawableCards = [TrainCard(Color.multicolored)];
-                    drawDestinationCards=0;
+                    possibleActions.claimableRoutes = [];
+                    possibleActions.drawableCards = [TrainCard(Color.multicolored)];
+                    possibleActions.canDrawDestinationCards=false;
             end
         end
 
-        function over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, routesClaimed, cardsDrawn, destinations)
-            over = ~isempty(routesClaimed) || ~isempty(cardsDrawn) || destinations;
+        function over =  isTurnOver(rules, possibleActions, takenActions)
+            over = ~isempty(takenActions.routesClaimed) || ~isempty(takenActions.cardsDrawn) || takenActions.destinationsDrawn;
         end
 
         function points = getRoutePoints(rules, route)

@@ -1,15 +1,16 @@
 classdef PlayerStub < Player
     methods(Access = public)
-        function [route, card, destination] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards)
-            route=0;
-            card=0;
-            destination=0;
-            if ~isempty(claimableRoutes)
-                route=1;
-            elseif ~isempty(drawableCards)
-                card=1;
+        function chosenActions = chooseAction(player, board, possibleActions)
+            chosenActions = struct();
+            chosenActions.route=0;
+            chosenActions.card=0;
+            chosenActions.drawDestinationCards=0;
+            if ~isempty(possibleActions.claimableRoutes)
+                chosenActions.route=1;
+            elseif ~isempty(possibleActions.drawableCards)
+                chosenActions.card=1;
             else
-                destination=1;
+                chosenActions.drawDestinationCards=true;
             end
         end
 
@@ -18,6 +19,16 @@ classdef PlayerStub < Player
         end
 
         function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)
+        end
+
+        function tf = canTakeAction(player, possibleActions)
+            arguments
+                player Player
+                possibleActions struct
+            end
+            tf = (isempty(possibleActions.claimableRoutes) && ...
+                  isempty(possibleActions.drawableCards) && ...
+                  ~possibleActions.canDrawDestinationCards);
         end
     end
 end
