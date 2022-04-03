@@ -32,7 +32,10 @@ classdef DefaultRules < Rules
                 drawableCards = TrainCard.empty;
                 canDrawDestinationCards = false;
             else
-                drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
+                if trainsDeck.drawable()
+                    drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
+                end
+
                 if ~isempty(cardsDrawn)
                     %Don't allow the player to draw a locomotive as their
                     %second card
@@ -49,6 +52,7 @@ classdef DefaultRules < Rules
                     claimableRouteColors = Color.empty;
                     canDrawDestinationCards = false;
                 else
+                    canDrawDestinationCards=false;
                     if destinationsDeck.getNumCardsLeft() > 0
                         canDrawDestinationCards = true;                
                     end
@@ -84,8 +88,9 @@ classdef DefaultRules < Rules
         end
 
         function updateGameState(rules, board, players, trainsDeck, destinationsDeck)
+            playerTrains=Rules.getPlayerTrains(board, players, rules.startingTrains);
             for p = 1:length(players)
-                if rules.startingTrains - board.getNumOfTrains(players(p).color) <= 2
+                if  playerTrains(p) <= 2
                     % if a player has two or less trains remaining,
                     % everyone gets one more turn before the game is over
                     if rules.turnsRemaining == -1
@@ -107,7 +112,7 @@ classdef DefaultRules < Rules
 
         function updateEndgameScores(rules, board, players)
             % apply destination ticket and longest route victory points
-           longestRouteLengths = Rules.getLongestRoute(board, players);
+           longestRouteLengths = Rules.getLongestRoute(board, players)
 
             for playerIx=1:length(players)
                 destinationTickets = players(playerIx).destinationCardsHand;

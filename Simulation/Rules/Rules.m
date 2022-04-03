@@ -14,6 +14,7 @@ classdef Rules < handle
         longestRoutePoints = 10
     end
 
+
     methods (Abstract=true)
         initGameState(rules);
         [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
@@ -228,6 +229,13 @@ classdef Rules < handle
                 % make graph of only player owned edges
                 playerGraph = graph(board.routeGraph.Edges(board.routeGraph.Edges.Owner==players(playerIx).color, :));
                 longestRouteLengths(playerIx) = Rules.getPlayerLongestRoute(playerGraph);
+            end
+        end
+
+        function playerTrains = getPlayerTrains(board, players, nStartingTrains)
+            playerTrains=zeros(1,length(players));
+            for p=1:length(players)
+                playerTrains(p) = nStartingTrains-board.getNumOfTrains(players(p).color);
             end
         end
     end

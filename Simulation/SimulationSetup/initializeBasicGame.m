@@ -7,9 +7,11 @@ function game = initializeBasicGame(args)
     BaseBoard.InitializeTrainCardDeck;
     BaseBoard.InitializeDestinationTicketCards;
 
-    players = DummyPlayer.empty;
-    for ix=1:nPlayers
-        players(ix) = DummyPlayer(ix);
+    players=Player.empty;
+    players(1) = LongRoutePlayer(1);
+    for ix=2:nPlayers
+        players(ix) = DestinationTicketPlayer(ix);
+%         players(ix) = DummyPlayer(ix);
     end
 
     game = Game(BOARD, players, DefaultRules(), TRAINS_DECK, DESTINATIONS_DECK);

@@ -57,8 +57,8 @@ classdef Board < handle
                     routeGraph = routeGraph.addnode(route.locations(2).string());
                 end
                 
-                aTable = table(route.id, route.length, Color.gray);
-                aTable.Properties.VariableNames = {'id', 'Length', 'Owner'};
+                aTable = table(route.id, route.length, Color.gray, route.length);
+                aTable.Properties.VariableNames = {'id', 'Length', 'Owner', 'Weight'};
                 routeGraph = routeGraph.addedge( ...
                     route.locations(1).string(), ...
                     route.locations(2).string(), ...

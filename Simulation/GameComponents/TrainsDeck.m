@@ -140,58 +140,61 @@ classdef TrainsDeck < handle
             end
         end
 
-        function card = drawCard(obj, card)
+        function drawnCard = drawCard(obj, desiredCard)
             % drawCard 
             % Draw given face up card
             % If the card color is unknown, draw from the deck.
             arguments
                 obj TrainsDeck
-                card TrainCard
+                desiredCard TrainCard
             end
 
-            if drawable(obj)
+            drawnCard = TrainCard.empty;
 
+            % get index of card in face up pile
+            cardIndex = find([obj.faceUpCards.color] == desiredCard.color);
+            if ~isempty(cardIndex)
+                % card is face up, grab first instance
+                cardIndex = cardIndex(1);
+            else
+                % card is not in face up pile, draw from deck
+                cardIndex = -1;
+            end
 
-                % get index of card in face up pile
-                cardIndex = find([obj.faceUpCards.color] == card.color);
-                if ~isempty(cardIndex)
-                    % card is face up, grab first instance
-                    cardIndex = cardIndex(1);
-                else
-                    % card is not in face up pile, draw from deck
-                    cardIndex = -1;
-                end
-            % If the index is <= the number of face-up cards, draw the 
-            % indexed face-up card
+            if ~obj.drawable()
+                checkDrawPile(obj, 1);
+            else
+                % If the index is <= the number of face-up cards, draw the 
+                % indexed face-up card
                 if (cardIndex > 0 && cardIndex <= length(obj.faceUpCards))          
                     % Return the face-up card specified by the Player 
                     % via the cardIndex argument
-                    card = obj.faceUpCards(cardIndex);
-                    obj.faceUpCards(cardIndex) = [];          
-                    obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
-                    obj.drawPile(1) = [];
+                    drawnCard = obj.faceUpCards(cardIndex);
+                    obj.faceUpCards(cardIndex) = [];    
+                    if obj.drawable()
+                        obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
+                        obj.drawPile(1) = [];
+                    end
     
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. Then, make sure to check for valid face up
                     % cards (< maxMulticoloredFaceUpAllowed).
                     checkDrawPile(obj, 1);
                     obj.addAndCheckFaceUpCards();
-                elseif(cardIndex < 0)
+                elseif(cardIndex < 0 && obj.drawable())
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
-                    card = obj.drawPile(1); 
+                    checkDrawPile(obj, 1);
+                    drawnCard = obj.drawPile(1); 
                     obj.drawPile(1) = [];
     
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. 
                     checkDrawPile(obj, 1);
                 else
-                    disp("Index given for drawing a card from the draw " + ...
+                    error("Index given for drawing a card from the draw " + ...
                         "pile or face-up cards was out of range.")
                 end
-
-            else
-                disp("The player cannot draw a card.")            
             end
         end
 
@@ -226,16 +229,8 @@ classdef TrainsDeck < handle
             end
 
             cards = obj.faceUpCards;
-        end
-        
-    end % public methods
+        end       
 
-    methods (Access = private)
-        %% Private Helper Functions
-        % used mainly for running the TrainDeck class and doing 
-        % internal checking of the TrainDeck state. These are not to be 
-        % called by other classes.
-        
         function tf = drawable(obj)                           
             % This returns true if we are able to draw cards from the TrainDeck 
             % (either from the face-up cards or the drawPile).
@@ -260,7 +255,12 @@ classdef TrainsDeck < handle
             end
 
         end
-
+    end
+    methods(Access=private)
+        %% Private Helper Functions
+        % used mainly for running the TrainDeck class and doing 
+        % internal checking of the TrainDeck state. These are not to be 
+        % called by other classes.
         function shuffle(obj)
             arguments
                 obj TrainsDeck
