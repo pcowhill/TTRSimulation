@@ -182,7 +182,16 @@ classdef VariableUtilityPlayer < Player
 
             %get indices of destination ticket cards in player's hand that
             %have not been conpleted
-            unfinishedDestinationsIx = find(not(player.destinationsCompleted));    
+            unfinishedDestinationsIx = find(not(player.destinationsCompleted));   
+            baselineDistances=zeros(1,length(unfinishedDestinationsIx));
+            for destIx=1:length(unfinishedDestinationsIx)
+                s=player.destinationCardsHand(unfinishedDestinationsIx(destIx)).firstLocation;
+                t=player.destinationCardsHand(unfinishedDestinationsIx(destIx)).secondLocation;
+                [~,d] = shortestpath(destinationGraph,...
+                    s.string,...
+                    t.string);
+                baselineDistances(destIx)=d;
+            end
             for ix=1:length(unclaimedRoutes)
                 route = unclaimedRoutes(ix);
                 player.routeUtilities.routeLength(ix) = route.length;
@@ -194,6 +203,7 @@ classdef VariableUtilityPlayer < Player
                 if player.destinationTicketWeight>0
                     destinationUtility=0;
                     for destIx=1:length(unfinishedDestinationsIx)
+                        d=baselineDistances(destIx);
                         dest = player.destinationCardsHand(unfinishedDestinationsIx(destIx));
                         node1=find(destinationGraph.Nodes.Name==route.locations(1));
                         node2=find(destinationGraph.Nodes.Name==route.locations(2)); 
@@ -204,7 +214,7 @@ classdef VariableUtilityPlayer < Player
                         %routes are considered to be 0 length)
                         if any(ismember(destinationGraph.Nodes.Name, dest.firstLocation.string)) && ...
                                 any(ismember(destinationGraph.Nodes.Name, dest.secondLocation.string))
-                            [~,d]=shortestpath(destinationGraph,dest.firstLocation.string,dest.secondLocation.string);
+                            
                             if d~=Inf && d <= trainsLeft
                                 destGraphCopy=destinationGraph;
                                 e=find(destGraphCopy.Edges.id==route.id);
