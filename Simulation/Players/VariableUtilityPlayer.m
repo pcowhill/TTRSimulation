@@ -1,6 +1,6 @@
 classdef VariableUtilityPlayer < Player 
-    %Long Route Player class
-    %   Player that is just trying to claim long routes.
+    %VariableUtilityPlayer class
+    %   Player that chooses actions based on weighted utility values.
 
     properties (SetAccess=protected)
         destinationsCompleted
@@ -43,7 +43,7 @@ classdef VariableUtilityPlayer < Player
             player.destinationsCompleted =zeros(1,length(player.destinationCardsHand));
         end
 
-        function [route, card, destination] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards)
+        function [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards)
             arguments
                 player Player
                 board Board
@@ -59,13 +59,13 @@ classdef VariableUtilityPlayer < Player
             player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
             disp(player.potentialDiscount);
 
-            destination=0;
+            drawDestinationCards=false;
             if player.checkDestinations
                 player.destinationsCompleted=Rules.getTicketsCompleted(board, player);
                 player.checkDestinations=false;
             end
             if player.shouldDrawDestinationCards(board)
-                destination=1;
+                drawDestinationCards=true;
                 card=0;
                 route=0;
                 player.checkDestinations=true;
@@ -74,9 +74,9 @@ classdef VariableUtilityPlayer < Player
                 [~, sortedIndices] = sort([claimableRoutes.length], 'descend');
                 route = sortedIndices(1);
                 card = 0;
-                destination = 0;
+                drawDestinationCards = false;
             else
-                player.getUtilityValues(board);
+                player.getUtilityValues(board, playerTrains([player.allPlayers.color]==player.color));
                 
                 maxUtility=0;
                 card=0;
@@ -116,7 +116,7 @@ classdef VariableUtilityPlayer < Player
                     end
                 end
                 %draw a card if no other actions provide utility
-                if route==0 && card==0 && destination==0
+                if route==0 && card==0 && ~drawDestinationCards
                     card=length(drawableCards);
                 end
                 if route~=0
@@ -155,21 +155,22 @@ classdef VariableUtilityPlayer < Player
 
         end
 
-        function getUtilityValues(player, board)
+        function getUtilityValues(player, board, trainsLeft)
             unclaimedRoutes = board.getUnclaimedRoutes();
             %don't bother recalculating utility if no new routes were claimed
             if isempty(player.routeUtilities) || ~all(ismember(player.routeUtilities.id, [unclaimedRoutes.id]))
-                player.getRouteUtilities(board, unclaimedRoutes);
+                player.getRouteUtilities(board, unclaimedRoutes, trainsLeft);
                 player.getColorUtilities(unclaimedRoutes);
             end
         end
 
-        function getRouteUtilities(player, board, unclaimedRoutes)
+        function getRouteUtilities(player, board, unclaimedRoutes, trainsLeft)
 
             % initialize route utilities
             utility = zeros(length(unclaimedRoutes),1);
+            routeLength = zeros(length(unclaimedRoutes),1);
             id = transpose([unclaimedRoutes.id]);
-            player.routeUtilities = table(id, utility);
+            player.routeUtilities = table(id, utility, routeLength);
 
             %make graph which includes only unowned routes and
             %routes owned by the player
@@ -184,7 +185,7 @@ classdef VariableUtilityPlayer < Player
             unfinishedDestinationsIx = find(not(player.destinationsCompleted));    
             for ix=1:length(unclaimedRoutes)
                 route = unclaimedRoutes(ix);
-                player.routeUtilities.length(ix) = route.length;
+                player.routeUtilities.routeLength(ix) = route.length;
 
                 %length utility score
                 player.routeUtilities.utility(ix) = player.lengthWeight * player.getRouteLengthUtility(route);
@@ -204,15 +205,20 @@ classdef VariableUtilityPlayer < Player
                         if any(ismember(destinationGraph.Nodes.Name, dest.firstLocation.string)) && ...
                                 any(ismember(destinationGraph.Nodes.Name, dest.secondLocation.string))
                             [~,d]=shortestpath(destinationGraph,dest.firstLocation.string,dest.secondLocation.string);
-                            destGraphCopy=destinationGraph;
-                            e=find(destGraphCopy.Edges.id==route.id);
-                            destGraphCopy.Edges.Weight(e)=0;
-                            [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
-                            %utility is linear based on shortest path
-                            %length reduction and destination ticket point
-                            %value
-                            util=max(0,(1-newd/d)*dest.pointValue*2);
-                            destinationUtility = max(destinationUtility, util);
+                            if d~=Inf && d <= trainsLeft
+                                destGraphCopy=destinationGraph;
+                                e=find(destGraphCopy.Edges.id==route.id);
+                                destGraphCopy.Edges.Weight(e)=0;
+                                [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
+                                if newd~=Inf
+                                    %utility is linear based on shortest path
+                                    %length reduction and destination ticket point
+                                    %value
+                                    reduction=max(0,min((1-newd/d),1));
+                                    util=reduction*dest.pointValue*2;
+                                    destinationUtility = max(destinationUtility, util);
+                                end
+                            end
                         end
                     end
                     player.routeUtilities.utility(ix) = player.routeUtilities.utility(ix)+...
@@ -232,9 +238,13 @@ classdef VariableUtilityPlayer < Player
                 routesOfColor = unclaimedRoutes(or(color==Color.multicolored, [unclaimedRoutes.color]==color));
                 [rows,~] = find([routesOfColor.id]==player.routeUtilities.id);
                 
-                %card utility is the route utility which the color can be
-                %used to claim divided by the length of the route
-                utility= max(player.routeUtilities.utility(rows)./player.routeUtilities.length(rows)*player.potentialDiscount);
+                if isempty(rows)
+                    utility=0;
+                else
+                    %card utility is the route utility which the color can be
+                    %used to claim divided by the length of the route
+                    utility= max(player.routeUtilities.utility(rows)./player.routeUtilities.routeLength(rows)*player.potentialDiscount);
+                end
                 if color ~= Color.gray
                     player.colorUtilities(color.string)=utility;               
                 else
@@ -254,10 +264,12 @@ classdef VariableUtilityPlayer < Player
                     end
                 end
             end
-            %the color most common in the player's hand which has less 
-            % utility than the gray utility is treated as the color for the
-            % gray routes
-            player.colorUtilities(grayRouteColor.string)=grayUtility;
+            if grayRouteColor~=Color.gray
+                %the color most common in the player's hand which has less 
+                % utility than the gray utility is treated as the color for the
+                % gray routes
+                player.colorUtilities(grayRouteColor.string)=grayUtility;
+            end
         end
     end
 end

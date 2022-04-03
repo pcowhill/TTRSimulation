@@ -32,9 +32,8 @@ classdef DefaultRules < Rules
                 drawableCards = TrainCard.empty;
                 canDrawDestinationCards = false;
             else
-                drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
-                if ~trainsDeck.drawable()
-                    drawableCards = [trainsDeck.getFaceUpCards()];
+                if trainsDeck.drawable()
+                    drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
                 end
 
                 if ~isempty(cardsDrawn)
@@ -53,7 +52,7 @@ classdef DefaultRules < Rules
                     claimableRouteColors = Color.empty;
                     canDrawDestinationCards = false;
                 else
-                    drawDestinationCards=0;
+                    canDrawDestinationCards=false;
                     if destinationsDeck.getNumCardsLeft() > 0
                         canDrawDestinationCards = true;                
                     end

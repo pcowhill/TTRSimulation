@@ -20,7 +20,7 @@ classdef LongRoutePlayer < VariableUtilityPlayer
         end
 
         function drawCards = shouldDrawDestinationCards(player,board)
-            drawCards=0;
+            drawCards=false;
         end
 
     end

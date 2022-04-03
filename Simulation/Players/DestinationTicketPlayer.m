@@ -18,7 +18,7 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
             [~, sortedIndices] = sort([destinationCards.pointValue], 'descend');
             
             % if it's the beginning of the game, take all cards
-            if isempty(player.destinationCardsHand) && length(destinationCards) > 1
+            if isempty(player.destinationCardsHand)
                 keptCardIndices=sortedIndices;
             else
                 % keep highest point value
@@ -29,9 +29,9 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
 
         function drawCards = shouldDrawDestinationCards(player,board)
             if all(player.destinationsCompleted) && player.potentialDiscount >= 0.8
-                drawCards = 1;
+                drawCards = true;
             else
-                drawCards=0;
+                drawCards=false;
             end
         end
 
