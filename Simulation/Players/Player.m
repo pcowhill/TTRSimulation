@@ -153,8 +153,14 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         function drawDestinations(player, board, destinationsDeck)
             cards = destinationsDeck.draw(3);
             chosenCardsIndices = player.chooseDestinationCards(board, cards);
-            if isempty(chosenCardsIndices)
-                chosenCardsIndices = 1;
+            if isempty(player.destinationCardsHand)
+                if length(chosenCardsIndices) < 2
+                    chosenCardsIndices = [1 2];
+                end
+            else
+                if isempty(chosenCardsIndices)
+                    chosenCardsIndices=1;
+                end
             end
             player.destinationCardsHand = [player.destinationCardsHand cards(chosenCardsIndices)];
             cards(chosenCardsIndices) = [];
