@@ -17,9 +17,9 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
             % choose largest point value
             [~, sortedIndices] = sort([destinationCards.pointValue], 'descend');
             
-            % if it's the beginning of the game, take all cards
+            % if it's the beginning of the game, take 2 highest cards
             if isempty(player.destinationCardsHand)
-                keptCardIndices=sortedIndices(1);
+                keptCardIndices=sortedIndices(1:2);
             else
                 % keep highest point value
                 keptCardIndices=sortedIndices(1);

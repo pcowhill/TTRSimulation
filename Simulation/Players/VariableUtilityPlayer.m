@@ -58,7 +58,7 @@ classdef VariableUtilityPlayer < Player
             % potential discount is based on number of trains players have
             % left
             playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
-            player.potentialDiscount=1-(min(playerTrains)/(player.nStartingTrains)-1)^4;
+            player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
             disp(player.potentialDiscount);
 
             drawDestinationCards=false;
@@ -92,8 +92,9 @@ classdef VariableUtilityPlayer < Player
                         if ~isKey(colorsInHand,color.string)
                             colorsInHand(color.string) = length(find([player.trainCardsHand.color]==color));
                         end
-                        handUtility=player.colorUtilities(color.string)*colorsInHand(color.string)+...
-                            player.colorUtilities("multicolored")*(routeObj.length-colorsInHand(color.string));
+                        handUtility=player.potentialDiscount*...
+                            (player.colorUtilities(color.string)*colorsInHand(color.string)+...
+                            player.colorUtilities("multicolored")*(routeObj.length-colorsInHand(color.string)));
                         % check if utility of claiming route is higher than
                         % utility of having it in hand
                         if claimUtility >= handUtility && claimUtility > maxUtility
@@ -107,9 +108,9 @@ classdef VariableUtilityPlayer < Player
                     utility = 0;
                     if cardObj.color == Color.unknown
                         % set drawing card utility to average of all colors
-                        utility = mean(cell2mat(player.colorUtilities.values));
+                        utility = mean(cell2mat(player.colorUtilities.values))*player.potentialDiscount;
                     else
-                        utility = player.colorUtilities(cardObj.color.string);
+                        utility = player.colorUtilities(cardObj.color.string)*player.potentialDiscount;
                     end
                     %check if card provides more utility
                     %draw non-multicolored card if multicolored card has
@@ -139,8 +140,8 @@ classdef VariableUtilityPlayer < Player
             [~, sortedIndices] = sort([destinationCards.pointValue]);
             keptCardIndices=sortedIndices(1);
         end
-
-        
+    end
+    methods(Access=protected)      
 
         function getUtilityValues(player, board, trainsLeft)
             unclaimedRoutes = board.getUnclaimedRoutes();
@@ -238,7 +239,7 @@ classdef VariableUtilityPlayer < Player
                 else
                     %card utility is the route utility which the color can be
                     %used to claim divided by the length of the route
-                    utility= max(player.routeUtilities(rows)./player.routeLengths(rows)*player.potentialDiscount);
+                    utility= max(player.routeUtilities(rows)./player.routeLengths(rows));
                 end
                 if color ~= Color.gray
                     player.colorUtilities(color.string)=utility;               

@@ -47,7 +47,7 @@ classdef Board < handle
             % represents the cities and routes/connections between them
             % while also tracking information such as route owners and
             % length.
-            routeGraph=graph;
+            routeGraph = graph;
             
             for route = obj.initialRoutes
                 try % This fails if the location is already in the graph
@@ -147,7 +147,6 @@ classdef Board < handle
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
             % Resets the ownership map
-%             obj.routeGraph = obj.initializeRouteGraph();
             obj.routeGraph.Edges.Owner(:)=Color.gray;
         end
 
