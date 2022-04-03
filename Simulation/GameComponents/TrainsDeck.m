@@ -140,20 +140,19 @@ classdef TrainsDeck < handle
             end
         end
 
-        function card = drawCard(obj, card)
+        function drawnCard = drawCard(obj, desiredCard)
             % drawCard 
             % Draw given face up card
             % If the card color is unknown, draw from the deck.
             arguments
                 obj TrainsDeck
-                card TrainCard
+                desiredCard TrainCard
             end
 
-            
-
+            drawnCard = TrainCard.empty;
 
             % get index of card in face up pile
-            cardIndex = find([obj.faceUpCards.color] == card.color);
+            cardIndex = find([obj.faceUpCards.color] == desiredCard.color);
             if ~isempty(cardIndex)
                 % card is face up, grab first instance
                 cardIndex = cardIndex(1);
@@ -170,7 +169,7 @@ classdef TrainsDeck < handle
                 if (cardIndex > 0 && cardIndex <= length(obj.faceUpCards))          
                     % Return the face-up card specified by the Player 
                     % via the cardIndex argument
-                    card = obj.faceUpCards(cardIndex);
+                    drawnCard = obj.faceUpCards(cardIndex);
                     obj.faceUpCards(cardIndex) = [];    
                     if obj.drawable()
                         obj.faceUpCards(obj.nFaceUpCardsNeeded) = obj.drawPile(1);
@@ -185,14 +184,15 @@ classdef TrainsDeck < handle
                 elseif(cardIndex < 0 && obj.drawable())
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
-                    card = obj.drawPile(1); 
+                    checkDrawPile(obj, 1);
+                    drawnCard = obj.drawPile(1); 
                     obj.drawPile(1) = [];
     
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. 
                     checkDrawPile(obj, 1);
                 else
-                    disp("Index given for drawing a card from the draw " + ...
+                    error("Index given for drawing a card from the draw " + ...
                         "pile or face-up cards was out of range.")
                 end
             end
