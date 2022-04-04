@@ -17,8 +17,9 @@ classdef VariableUtilityPlayer < Player
     end
 
     properties (SetAccess=immutable)
-        lengthWeight = 1
-        destinationTicketWeight = 1
+        lengthWeight = 0
+        destinationTicketWeight = 0
+        deviantWeight=0
     end
 
     methods(Abstract)
@@ -27,10 +28,11 @@ classdef VariableUtilityPlayer < Player
 
 
     methods (Access = public)
-        function obj = VariableUtilityPlayer(playerNumber, lengthWeight, destinationTicketWeight)
+        function obj = VariableUtilityPlayer(playerNumber, lengthWeight, destinationTicketWeight, deviantWeight)
             obj@Player(playerNumber);
             obj.lengthWeight = lengthWeight;
             obj.destinationTicketWeight = destinationTicketWeight;
+            obj.deviantWeight=deviantWeight;
         end
 
         function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)

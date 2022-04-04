@@ -5,7 +5,7 @@ classdef LongRoutePlayer < VariableUtilityPlayer
 
     methods (Access = public)
         function obj = LongRoutePlayer(playerNumber)
-            obj@VariableUtilityPlayer(playerNumber, 1, 0);
+            obj@VariableUtilityPlayer(playerNumber, 1, 0, 0);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)

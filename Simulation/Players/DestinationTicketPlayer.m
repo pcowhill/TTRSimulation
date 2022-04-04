@@ -1,11 +1,11 @@
 classdef DestinationTicketPlayer < VariableUtilityPlayer
-    %Long Route Player class
-    %   Player that is just trying to claim long routes.
+    %DestinationTicketPlayer class
+    %   Player that is primarily trying to complete destination tickets.
 
 
     methods (Access = public)
         function obj = DestinationTicketPlayer(playerNumber)
-            obj@VariableUtilityPlayer(playerNumber, 0.1, 1);
+            obj@VariableUtilityPlayer(playerNumber, 0.1, 1, 0);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)

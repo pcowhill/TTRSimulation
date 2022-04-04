@@ -9,10 +9,12 @@ function game = initializeBasicGame(args)
 
     players=Player.empty;
     players(1) = LongRoutePlayer(1);
-    for ix=2:nPlayers
-        players(ix) = DestinationTicketPlayer(ix);
-%         players(ix) = DummyPlayer(ix);
-    end
+    players(2) = DestinationTicketPlayer(2);
+    players(3) = DeviantPlayer(3);
+%     for ix=2:nPlayers
+%         players(ix) = DestinationTicketPlayer(ix);
+% %         players(ix) = DummyPlayer(ix);
+%     end
 
     game = Game(BOARD, players, DefaultRules(), TRAINS_DECK, DESTINATIONS_DECK);
 
