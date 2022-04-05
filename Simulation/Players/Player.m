@@ -1,4 +1,4 @@
-classdef Player < handle
+classdef Player < handle & matlab.mixin.Heterogeneous
     %Player Base class
     %   Abstract class for player agents. Subclasses can override 
 
@@ -16,6 +16,10 @@ classdef Player < handle
         destinationCardsHand DestinationTicketCard = DestinationTicketCard.empty
 
         victoryPoints = 0
+                
+        nStartingTrains = 0
+
+        allPlayers
     end
 
     methods (Access = public)
