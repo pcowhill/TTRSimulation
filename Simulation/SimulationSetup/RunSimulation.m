@@ -12,10 +12,10 @@ function RunSimulation(initFunc, varargin)
     % global, this is the only generator we need. It does 
     % not need to be reseeded.
     switch rngSeed
-        case "random"
-            rng shuffle; % seeds the simulation with the current time
-        otherwise
-            rng(str2num(rngSeed));
+        case "Shuffle"
+            rng('shuffle'); % seeds the simulation with the current time
+        case "Consistent"
+            rng('default');
     end
    
     % Instantiate logger -- "The logger will be "globally available as a
