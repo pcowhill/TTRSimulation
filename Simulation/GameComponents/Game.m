@@ -34,7 +34,6 @@ classdef Game
         
         function results = simulateGame(game)
             logger = log4m.getLogger("logfile.txt");
-            %logger.info("Initializing player's destination cards");
 
             % Set up the game components
             game.rules.initGameState()
