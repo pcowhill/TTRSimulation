@@ -116,53 +116,19 @@ classdef Game
         end
 
         function p = returnColoredBoard(game)
-    
-           % Print out the board
-           p = plot(game.board.routeGraph, 'EdgeColor', [0.7 0.7 0.7], 'LineStyle', '-'); 
-           edgeColorsMatrix(1:size(game.board.routeGraph.Edges,1),1:3) = 0.7;
-           for routeIdx = 1:size(game.board.routeGraph.Edges,1) % look at the last column of the route graph to get the color of the route
-               
-                % If there is more than one route between two cities, make
-                % sure you assign the color to just one route (one gray
-                % route)
-                if sum(and(string(game.board.routeGraph.Edges(:,1).EndNodes(:,1)) == string(game.board.routeGraph.Edges(routeIdx,1).EndNodes(1)),string(game.board.routeGraph.Edges(:,1).EndNodes(:,2)) == string(game.board.routeGraph.Edges(routeIdx,1).EndNodes(2)))) > 1
-                    routes = find(and(string(game.board.routeGraph.Edges(:,1).EndNodes(:,1)) == string(game.board.routeGraph.Edges(routeIdx,1).EndNodes(1)),string(game.board.routeGraph.Edges(:,1).EndNodes(:,2)) == string(game.board.routeGraph.Edges(routeIdx,1).EndNodes(2)))); 
-                    if edgeColorsMatrix(routes(1),:) == [0.7 0.7 0.7]                        
-                        chosenEdgeIx = routes(1);  
-                    else
-                        % an owner of this route between the two cities
-                        % has already been assigned, make sure to
-                        % change the color of the OTHER edge between the
-                        % two cities
-                        chosenEdgeIx = routes(2);
-                    end
-                else % there's only one edge between these two cities, so just set the cityOrientation to the default order
-                        chosenEdgeIx = routeIdx;
-                end
-                  
-               switch game.board.routeGraph.Edges(routeIdx, 4).Owner
-                   case Color.purple
-                       edgeColorsMatrix(chosenEdgeIx,:) = [1 0 1];
-                   case Color.blue
-                       edgeColorsMatrix(chosenEdgeIx,:) = [0 0 1];
-                   case Color.orange
-                       edgeColorsMatrix(chosenEdgeIx,:) = [0.8290 0.4940 0.0250];
-                   case Color.white
-                       edgeColorsMatrix(chosenEdgeIx,:) = [1 1 1];
-                   case Color.green
-                       edgeColorsMatrix(chosenEdgeIx,:) = [0 1 0];
-                  case Color.yellow
-                       edgeColorsMatrix(chosenEdgeIx,:) = [1 1 0];
-                  case Color.black
-                       edgeColorsMatrix(chosenEdgeIx,:) = [0 0 0];
-                   case Color.red
-                       edgeColorsMatrix(chosenEdgeIx,:) = [1 0 0];
-                   case Color.gray
-                       % Do nothing
-                       %edgeColorsMatrix(chosenEdgeIx,:) = [0.7 0.7 0.7];
-               end
-           end
-           p.EdgeColor = edgeColorsMatrix;
+
+            edgeOwners=game.board.routeGraph.Edges.Owner;
+            edgeColors = repmat([0 0 0], length(edgeOwners), 1);    
+            tmp=find(edgeOwners=='red');
+            edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
+            tmp=find(edgeOwners=='yellow');
+            edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='green');
+            edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='blue');
+            edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
+
+            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors)
         end
     end
 
