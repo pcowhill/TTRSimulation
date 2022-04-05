@@ -112,16 +112,6 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         end
     end
 
-    methods (Abstract)
-        [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
-        %chooseAction Returns [index of route to claim, index of card to
-        % draw, whether to draw destination tickets] only one action will
-        % be taken
-        keptCardIndices = chooseDestinationCards(player, board, destinationCards);
-        %chooseDestinationCards returns the indices of the cards to keep
-    end
-
-
     methods (Access=private, Sealed=true)
         function claimRoute(player, rules, board, trainsDeck, route, color)
            board.claim(route, player.color);
