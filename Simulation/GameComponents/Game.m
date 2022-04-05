@@ -43,7 +43,7 @@ classdef Game
             startingCards = game.trainsDeck.init(length(game.players)*game.rules.nStartingCards, game.rules.nFaceUpCards, game.rules.nMulticoloredAllowed);
             for playerIx = 1:length(game.players)
                logger.writeTurnAndPlayer("Initializing player destination cards", "Player " + playerIx)
-               game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck);
+               game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck, game.rules.startingTrains, game.players);
             end
             
             logger = log4m.getLogger("logfile.txt");
