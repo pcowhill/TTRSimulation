@@ -77,19 +77,38 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         function addToVictoryPoints(player, points)
             player.victoryPoints = player.victoryPoints+points;
         end
+    end
+       
+    methods (Abstract)
+        [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
+        %chooseAction Returns [index of route to claim, index of card to
+        % draw, whether to draw destination tickets] only one action will
+        % be taken
+        keptCardIndices = chooseDestinationCards(player, board, destinationCards);
+        %chooseDestinationCards returns the indices of the cards to keep
 
-        function initPlayer(player, startingHand, board, destinationsDeck)
+        initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains);
+    end
+
+    methods (Sealed=true)
+        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players)
             %initPlayer Get starting hand and choose destination cards
             arguments
                 player Player
                 startingHand TrainCard
                 board Board
                 destinationsDeck DestinationsDeck
+                nStartingTrains
+                players
             end
             player.destinationCardsHand = DestinationTicketCard.empty;
             player.victoryPoints = 0;
             player.drawDestinations(board, destinationsDeck);
             player.trainCardsHand = startingHand;
+            player.nStartingTrains=nStartingTrains;
+            player.allPlayers = players;
+            
+            player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
         end
     end
 
