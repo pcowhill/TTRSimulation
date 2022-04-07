@@ -130,6 +130,9 @@ classdef VariableUtilityPlayer < Player
                 if route~=0
                     player.checkDestinations=true;
                 end
+                if card > 0
+                    disp(drawableCards(card).color);
+                end
             end
         end
 
@@ -148,13 +151,12 @@ classdef VariableUtilityPlayer < Player
         function getUtilityValues(player, board, trainsLeft)
             unclaimedRoutes = board.getUnclaimedRoutes();
             %don't bother recalculating utility if no new routes were claimed
-            if isempty(player.routeUtilities) || ~all(ismember(player.routeIds, [unclaimedRoutes.id]))
-                player.getRouteUtilities(board, unclaimedRoutes, trainsLeft);
-                player.getColorUtilities(unclaimedRoutes);
-            end
+            deviantOnly = ~(isempty(player.routeUtilities) || ~all(ismember(player.routeIds, [unclaimedRoutes.id])));
+            player.getRouteUtilities(board, unclaimedRoutes, trainsLeft, deviantOnly);
+            player.getColorUtilities(unclaimedRoutes);
         end
 
-        function getRouteUtilities(player, board, unclaimedRoutes, trainsLeft)
+        function getRouteUtilities(player, board, unclaimedRoutes, trainsLeft, deviantOnly)
 
             % initialize route utilities
             player.routeUtilities = zeros(length(unclaimedRoutes),1);
@@ -191,36 +193,69 @@ classdef VariableUtilityPlayer < Player
                 player.routeLengths(ix) = route.length;
 
                 %length utility score
-                player.routeUtilities(ix) = player.lengthWeight * VariableUtilityPlayer.getRouteLengthUtility(route);
+                lengthUtility=VariableUtilityPlayer.getRouteLengthUtility(route);
+                player.routeUtilities(ix) = player.lengthWeight * lengthUtility;
 
-                %destination ticket utility score
-                if player.destinationTicketWeight>0
-                    destinationUtility=0;
-
-                    destGraphCopy=destinationGraph;
-                    e=edgeIndices(ix);
-                    destGraphCopy.Edges.Weight(e)=0;
-                    for destIx=1:length(unfinishedDestinations)
-                        d=baselineDistances(destIx);
-                        dest = unfinishedDestinations(destIx);
-
-                        %general theory: check how much claiming this route
-                        %would reduce the length of the shortest path to
-                        %complete the destination ticket (player claimed
-                        %routes are considered to be 0 length)
-                        if d~=Inf && d <= trainsLeft
-                            [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
-                            if newd~=Inf
-                                %utility is linear based on shortest path
-                                %length reduction and destination ticket point
-                                %value
-                                destinationUtility = max(destinationUtility,...
-                                    VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue));
+%                 if ~deviantOnly
+                    %destination ticket utility score
+                    if player.destinationTicketWeight>0
+                        destinationUtility=0;
+    
+                        destGraphCopy=destinationGraph;
+                        e=edgeIndices(ix);
+                        destGraphCopy.Edges.Weight(e)=0;
+                        for destIx=1:length(unfinishedDestinations)
+                            d=baselineDistances(destIx);
+                            dest = unfinishedDestinations(destIx);
+    
+                            %general theory: check how much claiming this route
+                            %would reduce the length of the shortest path to
+                            %complete the destination ticket (player claimed
+                            %routes are considered to be 0 length)
+                            if d~=Inf && d <= trainsLeft
+                                [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
+                                if newd~=Inf
+                                    %utility is linear based on shortest path
+                                    %length reduction and destination ticket point
+                                    %value
+                                    destinationUtility = max(destinationUtility,...
+                                        VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue));
+                                end
                             end
                         end
+                        player.routeUtilities(ix) = player.routeUtilities(ix)+...
+                                player.destinationTicketWeight*destinationUtility;
                     end
+%                 end
+
+                if player.deviantWeight > 0
+                    deviantUtility=0;
+
+                    for playerIx=1:length(player.allPlayers)
+                        p = player.allPlayers(playerIx);
+                        if p.color ~= player.color
+                            if route.color ~= Color.gray
+                                colorFactor = max(0,min(1,(length(find([p.publicHand.color]==route.color)))/route.length));
+                            else
+                                colorFactor = 0.1;
+                            end
+                            deviantRouteLengthUtility = colorFactor*lengthUtility/(length(player.allPlayers)-1);
+                            deviantUtility = deviantUtility + deviantRouteLengthUtility/2;
+                            deviantConnectionUtility = colorFactor*6/(length(player.allPlayers)-1);
+                            node1EdgeOwners=board.routeGraph.Edges.Owner(outedges(board.routeGraph,route.locations(1).string));
+                            node2EdgeOwners=board.routeGraph.Edges.Owner(outedges(board.routeGraph,route.locations(2).string));
+                            if any(node1EdgeOwners==p.color)
+                                deviantUtility = deviantUtility + deviantConnectionUtility/2;
+                            end
+                            if any(node2EdgeOwners==p.color)
+                                deviantUtility = deviantUtility + deviantConnectionUtility/2;
+                            end
+
+                        end
+                    end
+
                     player.routeUtilities(ix) = player.routeUtilities(ix)+...
-                            player.destinationTicketWeight*destinationUtility;
+                            player.deviantWeight*deviantUtility;
                 end
             end
         end

@@ -4,7 +4,7 @@ classdef DeviantPlayer < VariableUtilityPlayer
     
     methods (Access = public)
         function obj = DeviantPlayer(playerNumber)
-            obj@VariableUtilityPlayer(playerNumber, 0.1, 0, 1);
+            obj@VariableUtilityPlayer(playerNumber, 1, 0, 1);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)

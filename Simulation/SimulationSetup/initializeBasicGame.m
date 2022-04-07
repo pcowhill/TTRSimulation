@@ -8,9 +8,9 @@ function game = initializeBasicGame(args)
     BaseBoard.InitializeDestinationTicketCards;
 
     players=Player.empty;
-    players(1) = LongRoutePlayer(1);
-    players(2) = DestinationTicketPlayer(2);
-    players(3) = DeviantPlayer(3);
+    players(1) = DestinationTicketPlayer(1);
+    players(2) = LongRoutePlayer(2);
+%     players(3) = DeviantPlayer(3);
 %     for ix=2:nPlayers
 %         players(ix) = DestinationTicketPlayer(ix);
 % %         players(ix) = DummyPlayer(ix);
