@@ -9,14 +9,12 @@ function game = initializeBasicGame(args)
     BaseBoard.InitializeTrainCardDeck;
     BaseBoard.InitializeDestinationTicketCards;
 
-    players = DummyPlayer.empty;
-    for ix=1:nPlayers
-        if string(playerStrategies{ix}) == "Dummy Player"
-            players(ix) = DummyPlayer(ix);
-        else
-            error("The following player strategy is not defined in " + ...
-                  "initializeBasicGame: " + string(playerStrategies{ix}));
-        end
+    players=Player.empty;
+    players(1) = LongRoutePlayer(1);
+    for ix=2:nPlayers
+        players(ix) = DestinationTicketPlayer(ix);
+%         players(ix) = DummyPlayer(ix);
+
     end
 
     if string(ruleset) == "Default Rules"
