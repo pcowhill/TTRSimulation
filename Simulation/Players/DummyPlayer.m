@@ -40,5 +40,16 @@ classdef DummyPlayer < Player
             end
             keptCardIndices = 1;
         end
+
+        function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)
+            arguments
+                player Player
+                startingHand TrainCard
+                board Board
+                destinationsDeck DestinationsDeck
+                nStartingTrains
+            end
+            % Intentionally does nothing.
+        end
     end
 end
