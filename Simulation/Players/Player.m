@@ -51,7 +51,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
 
             while ~turnOver
                 possibleActions = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, takenActions);
-                if player.canTakeAction(possibleActions)
+                if player.cannotTakeAction(possibleActions)
                     turnOver = true;
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
@@ -86,9 +86,9 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         % draw, whether to draw destination tickets] only one action will
         % be taken
 
-        tf = canTakeAction(player, possibleActions);
-        %canTakeAction return whether or not the player is able to take one
-        % of the possible actions provided to this method.
+        tf = cannotTakeAction(player, possibleActions);
+        %cannotTakeAction return whether or not the player is unable to
+        % take any of the possible actions provided to this method.
 
         keptCardIndices = chooseDestinationCards(player, board, destinationCards);
         %chooseDestinationCards returns the indices of the cards to keep

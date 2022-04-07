@@ -21,7 +21,7 @@ classdef PlayerStub < Player
         function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)
         end
 
-        function tf = canTakeAction(player, possibleActions)
+        function tf = cannotTakeAction(player, possibleActions)
             arguments
                 player Player
                 possibleActions struct

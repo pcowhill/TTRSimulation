@@ -123,7 +123,7 @@ classdef VariableUtilityPlayer < Player
             end
         end
 
-        function tf = canTakeAction(player, possibleActions)
+        function tf = cannotTakeAction(player, possibleActions)
             arguments
                 player Player
                 possibleActions struct
