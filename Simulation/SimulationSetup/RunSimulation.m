@@ -1,6 +1,6 @@
 function RunSimulation(initFunc, varargin)
     gameObj = initFunc(varargin);
-    gameObj.simulateGame();
+    results = gameObj.simulateGame();
     assignin('base', "gameObj", gameObj);
 
     edgeOwners=gameObj.board.routeGraph.Edges.Owner;
@@ -14,5 +14,7 @@ function RunSimulation(initFunc, varargin)
     tmp=find(edgeOwners=='blue');
     edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
     
-    plot(gameObj.board.routeGraph, 'EdgeColor', edgeColors)
+    plot(gameObj.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', varargin{6})
+    bar(categorical(results.finalScores{1}), results.finalScores{2}, 'Parent', varargin{7})
+
 end

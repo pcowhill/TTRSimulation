@@ -54,8 +54,14 @@ classdef Game
                playerIx = mod(playerIx, length(game.players))+1;
             end
             
+            playerColors = {};
+            for iPlayer = 1:length(game.players)
+                playerColors{iPlayer} = char(game.players(iPlayer).color.string);
+            end
             game.rules.updateEndgameScores(game.board, game.players);
-            finalScores=[game.players.victoryPoints]
+            finalScores={playerColors, [game.players.victoryPoints]};
+            results = struct();
+            results.finalScores = finalScores;
 
            % metrics stuff?
             
