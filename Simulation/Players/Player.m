@@ -42,35 +42,35 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
             end
-            routesClaimed = Route.empty;
-            cardsDrawn = TrainCard.empty;
-            destinationsDrawn=false;
+
+            takenActions = struct();
+            takenActions.routesClaimed = Route.empty;
+            takenActions.cardsDrawn = TrainCard.empty;
+            takenActions.destinationsDrawn = false;
             turnOver = false;
 
             while ~turnOver
-                [claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards] = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, destinationsDrawn);
-                if isempty(claimableRoutes) && isempty(drawableCards) && ~canDrawDestinationCards
+                possibleActions = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, takenActions);
+                if player.cannotTakeAction(possibleActions)
                     turnOver = true;
                 else
-                    [route, card, drawDestinationCards] = player.chooseAction(board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
-                    if route > 0
-                        player.claimRoute(rules, board, trainsDeck, claimableRoutes(route), claimableRouteColors(route));
-                        routesClaimed=[routesClaimed claimableRoutes(route)];
-                    elseif card > 0
-                        cardsDrawn = [cardsDrawn drawableCards(card)];
-                        player.drawTrainCard(trainsDeck, drawableCards(card));
-                    elseif drawDestinationCards
-                        destinationsDrawn=true;
+                    chosenActions = player.chooseAction(board, possibleActions);
+                    if isfield(chosenActions, 'route') && chosenActions.route > 0
+                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route));
+                        takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
+                    elseif isfield(chosenActions, 'card') && chosenActions.card > 0
+                        takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
+                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card));
+                    elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
+                        takenActions.destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck);
                     end
-                    if rules.isTurnOver(claimableRoutes, drawableCards, canDrawDestinationCards, routesClaimed, cardsDrawn, destinationsDrawn)
+                    if rules.isTurnOver(possibleActions, takenActions)
                         turnOver = true;
                     end
                 end
             end
-
         end
-
     end
 
     methods (Sealed=true)
@@ -78,15 +78,18 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.victoryPoints = player.victoryPoints+points;
         end
 
-        
     end
 
-
     methods (Abstract)
-        [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
+        chosenAction = chooseAction(player, board, possibleActions);
         %chooseAction Returns [index of route to claim, index of card to
         % draw, whether to draw destination tickets] only one action will
         % be taken
+
+        tf = cannotTakeAction(player, possibleActions);
+        %cannotTakeAction return whether or not the player is unable to
+        % take any of the possible actions provided to this method.
+
         keptCardIndices = chooseDestinationCards(player, board, destinationCards);
         %chooseDestinationCards returns the indices of the cards to keep
 
