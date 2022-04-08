@@ -42,7 +42,7 @@ classdef Game
             startingCards = game.trainsDeck.init(length(game.players)*game.rules.nStartingCards, game.rules.nFaceUpCards, game.rules.nMulticoloredAllowed);
             for playerIx = 1:length(game.players)
                logger.writeTurnAndPlayer("Initializing player destination cards", "Player " + playerIx)
-               game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck, game.rules.startingTrains, game.players);
+               game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck, game.rules.startingTrains, game.players, logger);
             end
             
             logger = log4m.getLogger("logfile.txt");
@@ -53,34 +53,36 @@ classdef Game
             % Play game until rules say it's over
             while ~gameOver
                turnCount = turnCount + (playerIx==1)
-               logger.writeTurnAndPlayer("Turn " + turnCount, "Player " + playerIx)
-               game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck);   
+               logger.writeTurnAndPlayer("Turn " + turnCount, "Player " + playerIx);
+               game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger);   
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
                playerIx = mod(playerIx, length(game.players))+1;
             end
-
-           % Game results, metrics, and visualization - This will be stuff that can be collected at
-           % the end of a game
-           results = processGameResults(game, playerIx, turnCount);
-        end
-
-        function results = processGameResults(game, playerIx, turnCount)
             
             % Calculate Final Scores
             game.rules.updateEndgameScores(game.board, game.players);
             finalScores=[game.players.victoryPoints]
 
+           % Game results, metrics, and visualization - This will be stuff that can be collected at
+           % the end of a game
+           results = processGameResults(game, playerIx, turnCount, finalScores);
+        end
+
+        function results = processGameResults(game, playerIx, turnCount, finalScores)
+
             % Calculate Player Specific Metrics
             lastPlayer = playerIx; 
 
             for playerIx = 1:length(game.players)
-                % number of trains left
-                trainsLeft(1,playerIx) = getNumOfTrains(game.board, game.players(playerIx).color);
+                % number of trains played
+                trainsPlayed(1,playerIx) = getNumOfTrains(game.board, game.players(playerIx).color);
  
                 % number of cards left
                 trainCardsLeft(1, playerIx) = length(game.players(playerIx).trainCardsHand);
-                destCardsLeft(1,playerIx) = length(game.players(playerIx).destinationCardsHand);
+                
+                % number of destination ticket cards completed
+                destCardsCompleted(1,playerIx) = sum(game.rules.getTicketsCompleted(game.board, game.players(playerIx)) == true);
  
                 % get routes claimed
                 routesClaimed(1,playerIx) = sum(game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color);
@@ -103,11 +105,11 @@ classdef Game
              activityLog = game.returnActivityLog();
              activityLog
  
-            % return finalScores, trainsLeft, trainCardsLeft, destCardsLeft,
+            % return finalScores, trainsPlayed, trainCardsLeft, destCardsCompleted,
             % playerTurns, and routesClaimed in the game results -- all of 
             % these are arrays of size 1 * nPlayers
-            results = [finalScores, trainsLeft, trainCardsLeft, ...
-                destCardsLeft, playerTurns, routesClaimed];
+            results = [finalScores, trainsPlayed, trainCardsLeft, ...
+                destCardsCompleted, playerTurns, routesClaimed];
  
             % Display figure of the board colored based on the owners of the
             % routes at the end of the game.

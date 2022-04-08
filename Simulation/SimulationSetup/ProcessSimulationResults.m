@@ -1,8 +1,9 @@
 function ProcessSimulationResults(allSimResults, nPlayers)
     nIters = size(allSimResults,1);    
     
-    % Calculate Average Scores, Number of Trains Left, Number of Cards
-    % Left, and Number of Turns per Player
+    % Calculate Average Scores, Number of Trains Played, Number of Train
+    % Cards Left, Number of Destination Cards Completed, Number of Turns
+    % per Player, and Number of Routes Claimed
     scoresCols = 1:nPlayers;
     numTrainsCols = nPlayers+1:2*nPlayers;
     numTrainCardCols = 2*nPlayers+1:3*nPlayers;
@@ -21,36 +22,31 @@ function ProcessSimulationResults(allSimResults, nPlayers)
     reportStatSignificanceWinRates(nPlayers, winRates, nIters);
 end
 
-function [avgMeans, stdDevs] = CalculatePlayerMeansSDs(allSimResults, columns)
-    % Calculate Average Scores, Number of Trains Left, Number of Cards
+function [avgMeans, stdDevs] = CalculatePlayerMeansSDs(allSimResults, columns, nIters)
+    % Calculate Average Scores, Number of Trains Played, Number of Cards
     % Left, and Number of Turns
-    avgMeans = mean(allSimResults(:,columns));
-    stdDevs = std(allSimResults(:,columns));
-end
-
-function BuildPlot(nPlayers, allSimResults, iters, columns, plotNum, avg, sd)
-    for p = 1:nPlayers
-        subplot(2,3,plotNum)
-        plot(iters, allSimResults(:,columns(p)));
-        hold on;
-
-        
-        txt = "";
-        for p = 1:nPlayers
-    
-            txt = strcat('\rightarrow Player',' ', num2str(p),'-- Avg: ',num2str(avg(p)),', SD: ',num2str(sd(p)));
-            text(0,avg(p),txt)
-            hold on;
-        end
-        text(0,0,txt)
-    end
+    if nIters > 1
+        avgMeans = mean(allSimResults(:,columns));
+        stdDevs = std(allSimResults(:,columns));
+    else % Just copy the actual values for the mean, and sd = 0
+        avgMeans = allSimResults(:,columns);
+        stdDevs = zeros(1,length(columns));
+    end        
 end
 
 function PlotSettings(inTitle, xLab, yLab, inLegend)
     title(inTitle)
     xlabel(xLab)
     ylabel(yLab)
-    legend(inLegend)
+    %legend(inLegend)
+end
+
+
+function BuildPlot(nPlayers, allSimResults, iters, columns, plotNum, avg, sd)
+     subplot(2,3,plotNum);
+     bar(1:nPlayers,avg);
+     hold on;
+     errorbar(avg, sd);
 end
 
 function winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
@@ -94,7 +90,7 @@ function reportStatSignificanceWinRates(nPlayers, winRates,nIters)
             % then it is statistically significant
             % Source: https://www.itl.nist.gov/div898/handbook/prc/section4/prc464.htm
             criticalRange(pair,1) = sqrt(criticalVal)*sqrt((winRates(i)*(1 - winRates(j)) + winRates(j)*(1 - winRates(j))) / nIters);
-            if pairDifference(pair,1) < criticalRange(pair,1)
+            if pairDifference(pair,1) <= criticalRange(pair,1)
                 isStatSignificant(pair,1) = "No";
             else
                 isStatSignificant(pair,1) = "Yes";
@@ -107,12 +103,12 @@ end
 
 function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols)
     % Calculate means and standard deviations
-    [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols);
-    [avgNumTrainsLeft, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols);
-    [avgNumTrainCardsLeft, trainCardSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainCardCols);
-    [avgNumDestCardsLeft, destCardsSDs] = CalculatePlayerMeansSDs(allSimResults, numDestCardCols);
-    [avgTurnCount, turnSDs] = CalculatePlayerMeansSDs(allSimResults, turnsCols);
-    [avgRoutesCount, routesSDs] = CalculatePlayerMeansSDs(allSimResults, routesCols);
+    [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
+    [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
+    [avgNumTrainCardsLeft, trainCardSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainCardCols, nIters);
+    [avgNumDestCardsCompleted, destCardsSDs] = CalculatePlayerMeansSDs(allSimResults, numDestCardCols, nIters);
+    [avgTurnCount, turnSDs] = CalculatePlayerMeansSDs(allSimResults, turnsCols, nIters);
+    [avgRoutesCount, routesSDs] = CalculatePlayerMeansSDs(allSimResults, routesCols, nIters);
         
     % We could replace these with the specific type of Player by taking the
     % class of each player in the players array. 
@@ -124,14 +120,14 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
     BuildPlot(nPlayers, allSimResults, iters, scoresCols, 1, avgPlayerScores, scoreSDs)
     PlotSettings("Player Final Scores", "Iterations", "Final Score", playerNames)
 
-    BuildPlot(nPlayers, allSimResults, iters, numTrainsCols, 2, avgNumTrainsLeft, trainSDs)
-    PlotSettings("Player Trains Left", "Iterations", "Trains Left", playerNames)
+    BuildPlot(nPlayers, allSimResults, iters, numTrainsCols, 2, avgNumTrainsPlayed, trainSDs)
+    PlotSettings("Player Trains Played", "Iterations", "Trains Played", playerNames)
 
     BuildPlot(nPlayers, allSimResults, iters, numTrainCardCols, 3, avgNumTrainCardsLeft, trainCardSDs)
     PlotSettings("Player Train Cards Left", "Iterations", "Cards Left", playerNames)
 
-    BuildPlot(nPlayers, allSimResults, iters, numDestCardCols, 4, avgNumDestCardsLeft, destCardsSDs)    
-    PlotSettings("Player Destination Cards Left", "Iterations", "Cards Left", playerNames)
+    BuildPlot(nPlayers, allSimResults, iters, numDestCardCols, 4, avgNumDestCardsCompleted, destCardsSDs)    
+    PlotSettings("Player Destination Cards Completed", "Iterations", "Cards Completed", playerNames)
     
     BuildPlot(nPlayers, allSimResults, iters, turnsCols, 5, avgTurnCount, turnSDs)    
     PlotSettings("Players' Turns", "Iterations", "Turns Taken", playerNames)
@@ -140,9 +136,9 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
     PlotSettings("Players' Routes Claimed", "Iterations", "Routes", playerNames)
    
     % Print Summary table
-    varNames = {'Avg Score', 'SD Score', 'Avg Trains Left', 'SD Trains Left', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Left', 'SD Dest Cards Left', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
-    playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsLeft', ...
+    varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
+    playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
         trainSDs', avgNumTrainCardsLeft', trainCardSDs', ...
-        avgNumDestCardsLeft', destCardsSDs', avgTurnCount', turnSDs',...
+        avgNumDestCardsCompleted', destCardsSDs', avgTurnCount', turnSDs',...
         avgRoutesCount', routesSDs','RowNames', playerNames, 'VariableNames', varNames)
 end

@@ -210,7 +210,7 @@ classdef log4m < handle
         
         % This was added to the log4m.m class for help with our processing
         % and storing steps during the TTR game simulation.
-        function writePlayerNameTurnNumber(self,level,scriptName,message)
+        function writePlayerNameTurnNumber(self,scriptName,message)
         
             %self.writeLog(self.INFO,funcName,message);
             % Add initial part of new log to log file -- this records the
@@ -220,7 +220,6 @@ classdef log4m < handle
                 fid = fopen(self.fullpath,'a');
                 fprintf(fid,'%s %s %s - %s' ...
                     , datestr(now,'yyyy-mm-dd HH:MM:SS,FFF') ...
-                    , levelStr ...
                     , scriptName ... % Have left this one with the '.' if it is passed
                     , message);
                 fclose(fid);

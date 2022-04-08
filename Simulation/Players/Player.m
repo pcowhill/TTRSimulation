@@ -29,7 +29,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.color = Player.PlayerColors(playerNumber);
         end
 
-        function takeTurn(player, rules, board, trainsDeck, destinationsDeck)
+        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger)
             %takeTurn Carry out a single turn
             %   Carry out chosen action using the provided board and decks.
             %   Assume board and decks are Handle type classes so they
@@ -41,6 +41,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 board Board
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
+                logger log4m
             end
             routesClaimed = Route.empty;
             cardsDrawn = TrainCard.empty;
@@ -54,14 +55,14 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     [route, card, drawDestinationCards] = player.chooseAction(board, claimableRoutes, claimableRouteColors, drawableCards, canDrawDestinationCards);
                     if route > 0
-                        player.claimRoute(rules, board, trainsDeck, claimableRoutes(route), claimableRouteColors(route));
+                        player.claimRoute(rules, board, trainsDeck, claimableRoutes(route), claimableRouteColors(route), logger);
                         routesClaimed=[routesClaimed claimableRoutes(route)];
                     elseif card > 0
                         cardsDrawn = [cardsDrawn drawableCards(card)];
-                        player.drawTrainCard(trainsDeck, drawableCards(card));
+                        player.drawTrainCard(trainsDeck, drawableCards(card), logger);
                     elseif drawDestinationCards
                         destinationsDrawn=true;
-                        player.drawDestinations(board,destinationsDeck);
+                        player.drawDestinations(board,destinationsDeck, logger);
                     end
                     if rules.isTurnOver(claimableRoutes, drawableCards, canDrawDestinationCards, routesClaimed, cardsDrawn, destinationsDrawn)
                         turnOver = true;
@@ -91,7 +92,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
     end
 
     methods (Sealed=true)
-        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players)
+        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players, logger)
             %initPlayer Get starting hand and choose destination cards
             arguments
                 player Player
@@ -100,10 +101,11 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 destinationsDeck DestinationsDeck
                 nStartingTrains
                 players
+                logger log4m
             end
             player.destinationCardsHand = DestinationTicketCard.empty;
             player.victoryPoints = 0;
-            player.drawDestinations(board, destinationsDeck);
+            player.drawDestinations(board, destinationsDeck, logger);
             player.trainCardsHand = startingHand;
             player.nStartingTrains=nStartingTrains;
             player.allPlayers = players;
@@ -113,7 +115,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
     end
 
     methods (Access=private, Sealed=true)
-        function claimRoute(player, rules, board, trainsDeck, route, color)
+        function claimRoute(player, rules, board, trainsDeck, route, color, logger)
            board.claim(route, player.color);
            indicesToDiscard = [];
            index = 1;
@@ -141,19 +143,17 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            player.trainCardsHand(indicesToDiscard) = [];
            player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
            activityLogStep = "claimed the route from " + string(route.locations(1)) + " to " + string(route.locations(2)) + " and earned " + rules.getRoutePoints(route) + " point(s).";
-           logger = log4m.getLogger('logfile.txt');
            logger.writePlayerTurnDetails("Claim Route","Player " + activityLogStep);
         end
 
-        function drawTrainCard(player, trainsDeck, card)
+        function drawTrainCard(player, trainsDeck, card, logger)
             player.trainCardsHand = [player.trainCardsHand trainsDeck.drawCard(card)];
                  
-            activityLogStep = "drew a " + string(player.trainCardsHand(end).color) + " card.";
-            logger = log4m.getLogger('logfile.txt');
+            activityLogStep = "drew a " + string(card.color) + " card.";
             logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);
         end
 
-        function drawDestinations(player, board, destinationsDeck)
+        function drawDestinations(player, board, destinationsDeck, logger)
             cards = destinationsDeck.draw(3);
             chosenCardsIndices = player.chooseDestinationCards(board, cards);
             
@@ -173,7 +173,6 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 end
             end
 
-            logger = log4m.getLogger('logfile.txt');
             logger.writePlayerTurnDetails("Draw Destinations","Player " + activityLogStep);
             player.destinationCardsHand = [player.destinationCardsHand cards(chosenCardsIndices)];
             cards(chosenCardsIndices) = [];
