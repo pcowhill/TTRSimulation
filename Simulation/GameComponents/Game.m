@@ -59,10 +59,18 @@ classdef Game
                gameOver = game.rules.isGameOver();
                playerIx = mod(playerIx, length(game.players))+1;
             end
+
+            playerColors = {};
+            for iPlayer = 1:length(game.players)
+                playerColors{iPlayer} = char(game.players(iPlayer).color.string);
+            end
             
             % Calculate Final Scores
+
             game.rules.updateEndgameScores(game.board, game.players);
-            finalScores=[game.players.victoryPoints]
+            finalScores={playerColors, [game.players.victoryPoints]};
+            results = struct();
+            results.finalScores = finalScores;
 
            % Game results, metrics, and visualization - This will be stuff that can be collected at
            % the end of a game
