@@ -4,6 +4,7 @@ function game = initializeBasicGame(args)
     nPlayers = args{1};
     playerStrategies = args{3};
     ruleset = args{4};
+    finalAxes = args{6};
 
     BaseBoard.initializeBoard;
     BaseBoard.InitializeTrainCardDeck;
@@ -32,7 +33,7 @@ function game = initializeBasicGame(args)
                  "initializeBasicGame: " + string(ruleset));
     end
 
-    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK);
+    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK, finalAxes.Board);
 
 end
 

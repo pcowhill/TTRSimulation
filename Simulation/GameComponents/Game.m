@@ -13,10 +13,12 @@ classdef Game
         trainsDeck TrainsDeck
 
         destinationsDeck DestinationsDeck
+
+        axesForFinalBoard
     end
     
     methods
-        function game = Game(board, players, rules, trainsDeck, destinationsDeck)
+        function game = Game(board, players, rules, trainsDeck, destinationsDeck, axesForFinalBoard)
             %GAME Initialize properties
             arguments
                 board Board
@@ -24,12 +26,14 @@ classdef Game
                 rules Rules
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
+                axesForFinalBoard
             end
             game.board = board;
             game.players = players;
             game.rules = rules;
             game.trainsDeck = trainsDeck;
             game.destinationsDeck = destinationsDeck;
+            game.axesForFinalBoard = axesForFinalBoard;
         end
         
         function results = simulateGame(game)
@@ -59,22 +63,15 @@ classdef Game
                gameOver = game.rules.isGameOver();
                playerIx = mod(playerIx, length(game.players))+1;
             end
-
-            playerColors = {};
-            for iPlayer = 1:length(game.players)
-                playerColors{iPlayer} = char(game.players(iPlayer).color.string);
-            end
             
             % Calculate Final Scores
 
             game.rules.updateEndgameScores(game.board, game.players);
-            finalScores={playerColors, [game.players.victoryPoints]};
-            results = struct();
-            results.finalScores = finalScores;
+            finalScores=[game.players.victoryPoints];
 
-           % Game results, metrics, and visualization - This will be stuff that can be collected at
-           % the end of a game
-           results = processGameResults(game, playerIx, turnCount, finalScores);
+            % Game results, metrics, and visualization - This will be stuff that can be collected at
+            % the end of a game
+            results = processGameResults(game, playerIx, turnCount, finalScores);
         end
 
         function results = processGameResults(game, playerIx, turnCount, finalScores)
@@ -137,7 +134,7 @@ classdef Game
             tmp=find(edgeOwners=='blue');
             edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
 
-            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors)
+            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
         end
     end
 

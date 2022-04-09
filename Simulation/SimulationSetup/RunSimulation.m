@@ -4,6 +4,7 @@ function RunSimulation(initFunc, varargin)
     nPlayers = varargin{1};
     nIterations = varargin{2};
     rngSeed = varargin{5};
+    finalAxes = varargin{6};
     nMetrics = 6;
 
     % Note: "rng controls the global stream, which determines 
@@ -36,5 +37,5 @@ function RunSimulation(initFunc, varargin)
     end
 
     % Analyze the results of all the trials
-    ProcessSimulationResults(results, length(gameObj.players));
+    ProcessSimulationResults(results, nPlayers, finalAxes);
 end

@@ -1,4 +1,4 @@
-function ProcessSimulationResults(allSimResults, nPlayers)
+function ProcessSimulationResults(allSimResults, nPlayers, finalAxes)
     nIters = size(allSimResults,1);    
     
     % Calculate Average Scores, Number of Trains Played, Number of Train
@@ -13,7 +13,7 @@ function ProcessSimulationResults(allSimResults, nPlayers)
 
     % Process, plot, and print statistics related to Averages and Standard
     % Deviations
-    processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols)
+    processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
 
     % Insert metrics about the statistical significance of the win
     % rates
@@ -34,19 +34,18 @@ function [avgMeans, stdDevs] = CalculatePlayerMeansSDs(allSimResults, columns, n
     end        
 end
 
-function PlotSettings(inTitle, xLab, yLab, inLegend)
-    title(inTitle)
-    xlabel(xLab)
-    ylabel(yLab)
-    %legend(inLegend)
+function PlotSettings(inTitle, xLab, yLab, axes)
+    title(inTitle, 'Parent', axes)
+    xlabel(xLab, 'Parent', axes)
+    ylabel(yLab, 'Parent', axes)
 end
 
 
-function BuildPlot(nPlayers, allSimResults, iters, columns, plotNum, avg, sd)
-     subplot(2,3,plotNum);
-     bar(1:nPlayers,avg);
-     hold on;
-     errorbar(avg, sd);
+function BuildPlot(nPlayers, avg, sd, axes)
+    bar(1:nPlayers,avg, 'Parent', axes);
+    hold(axes, 'on');
+    errorbar(avg, sd, 'LineStyle', 'none', 'Parent', axes);
+    hold(axes, 'off');
 end
 
 function winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
@@ -101,7 +100,7 @@ function reportStatSignificanceWinRates(nPlayers, winRates,nIters)
     winRatesStatResultTbl = table(playerA, playerB, pairDifference, criticalRange, isStatSignificant)   
 end
 
-function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols)
+function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
     % Calculate means and standard deviations
     [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
     [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
@@ -115,25 +114,23 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
     playerNames = "Player " + [1:nPlayers];
 
     % Plots vs. Iteration/Trial #
-    iters = 1:nIters;
-    figure(); % Open a separate figure to display the summary plots
-    BuildPlot(nPlayers, allSimResults, iters, scoresCols, 1, avgPlayerScores, scoreSDs)
-    PlotSettings("Player Final Scores", "Iterations", "Final Score", playerNames)
+    BuildPlot(nPlayers, avgPlayerScores, scoreSDs, finalAxes.FinalScores);
+    PlotSettings("Player Final Scores", "Players", "Final Score", finalAxes.FinalScores);
 
-    BuildPlot(nPlayers, allSimResults, iters, numTrainsCols, 2, avgNumTrainsPlayed, trainSDs)
-    PlotSettings("Player Trains Played", "Iterations", "Trains Played", playerNames)
+    BuildPlot(nPlayers, avgNumTrainsPlayed, trainSDs, finalAxes.TrainsPlayed);
+    PlotSettings("Player Trains Played", "Players", "Trains Played", finalAxes.TrainsPlayed);
 
-    BuildPlot(nPlayers, allSimResults, iters, numTrainCardCols, 3, avgNumTrainCardsLeft, trainCardSDs)
-    PlotSettings("Player Train Cards Left", "Iterations", "Cards Left", playerNames)
+    BuildPlot(nPlayers, avgNumTrainCardsLeft, trainCardSDs, finalAxes.TrainCardsLeft);
+    PlotSettings("Player Train Cards Left", "Players", "Cards Left", finalAxes.TrainCardsLeft);
 
-    BuildPlot(nPlayers, allSimResults, iters, numDestCardCols, 4, avgNumDestCardsCompleted, destCardsSDs)    
-    PlotSettings("Player Destination Cards Completed", "Iterations", "Cards Completed", playerNames)
+    BuildPlot(nPlayers, avgNumDestCardsCompleted, destCardsSDs, finalAxes.DestinationCardsComplete);
+    PlotSettings("Player Destination Cards Completed", "Players", "Cards Completed", finalAxes.DestinationCardsComplete);
     
-    BuildPlot(nPlayers, allSimResults, iters, turnsCols, 5, avgTurnCount, turnSDs)    
-    PlotSettings("Players' Turns", "Iterations", "Turns Taken", playerNames)
+    BuildPlot(nPlayers, avgTurnCount, turnSDs, finalAxes.Turns);
+    PlotSettings("Players' Turns", "Players", "Turns Taken", finalAxes.Turns);
  
-    BuildPlot(nPlayers, allSimResults, iters, routesCols, 6, avgRoutesCount, routesSDs)    
-    PlotSettings("Players' Routes Claimed", "Iterations", "Routes", playerNames)
+    BuildPlot(nPlayers, avgRoutesCount, routesSDs, finalAxes.RoutesClaimed);
+    PlotSettings("Players' Routes Claimed", "Players", "Routes", finalAxes.RoutesClaimed);
    
     % Print Summary table
     varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
