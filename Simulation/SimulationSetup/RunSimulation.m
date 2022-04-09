@@ -3,7 +3,7 @@ function RunSimulation(initFunc, varargin)
     
     nPlayers = varargin{1};
     nIterations = varargin{2};
-    rngSeed = varargin{3};
+    rngSeed = varargin{5};
     nMetrics = 6;
 
     % Note: "rng controls the global stream, which determines 

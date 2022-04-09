@@ -57,14 +57,14 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
                     if isfield(chosenActions, 'route') && chosenActions.route > 0
-                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route));
+                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger);
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
                     elseif isfield(chosenActions, 'card') && chosenActions.card > 0
                         takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
-                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card));
+                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger);
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
                         takenActions.destinationsDrawn=true;
-                        player.drawDestinations(board,destinationsDeck);
+                        player.drawDestinations(board,destinationsDeck, logger);
 
                     end
                     if rules.isTurnOver(possibleActions, takenActions)
