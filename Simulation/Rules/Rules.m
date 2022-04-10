@@ -17,7 +17,7 @@ classdef Rules < handle
 
     methods (Abstract=true)
         initGameState(rules);
-        [claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards] = ...
+        possibleActions = ...
                 getPossibleActions(rules, player, board, trainsDeck, destinationsDeck, routesClaimed, cardsDrawn, drawnDestinations);
             %getPossibleActions Get all possible actions for this player
             %   Returns list of claimable routes, drawable cards, and
@@ -30,7 +30,7 @@ classdef Rules < handle
             % drawnDestinations - whether the player has drawn destination
             % cards
 
-        over =  isTurnOver(rules, claimableRoutes, drawableCards, drawDestinationCards, route, card, destinations);
+        over = isTurnOver(possibleActions, takenActions);
             %isTurnOver Returns true if the player's last action has caused
             %   their turn to be over.
             %
