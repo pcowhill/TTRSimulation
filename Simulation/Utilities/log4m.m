@@ -11,9 +11,6 @@ classdef log4m < handle
     % Heavily modified version of 'log4matlab' which can be found here:
     %       http://www.mathworks.com/matlabcentral/fileexchange/33532-log4matlab
     %
-    %                       References
-    % Luke Winslow (2022). log4m - A powerful and simple logger for matlab 
-    % (https://www.mathworks.com/matlabcentral/fileexchange/37701-log4m-a-powerful-and-simple-logger-for-matlab), MATLAB Central File Exchange. Retrieved April 4, 2022.
     properties (Constant)
         ALL = 0;
         TRACE = 1;
@@ -210,15 +207,14 @@ classdef log4m < handle
         
         % This was added to the log4m.m class for help with our processing
         % and storing steps during the TTR game simulation.
-        function writePlayerNameTurnNumber(self,scriptName,message)
+        function writeGameNumber(self,scriptName,message)
         
             %self.writeLog(self.INFO,funcName,message);
             % Add initial part of new log to log file -- this records the
-            % turn # and player number -- this will be called from the Game
-            % class
+            % beginning of a new game
             try
                 fid = fopen(self.fullpath,'a');
-                fprintf(fid,'%s %s %s - %s' ...
+                fprintf(fid,'%s %s - %s\r\n' ...
                     , datestr(now,'yyyy-mm-dd HH:MM:SS,FFF') ...
                     , scriptName ... % Have left this one with the '.' if it is passed
                     , message);

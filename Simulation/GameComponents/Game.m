@@ -36,9 +36,7 @@ classdef Game
             game.axesForFinalBoard = axesForFinalBoard;
         end
         
-        function results = simulateGame(game)
-            logger = log4m.getLogger("logfile.txt");
-
+        function results = simulateGame(game, logger)
             % Set up the game components
             game.rules.initGameState()
             game.destinationsDeck.init();
@@ -49,8 +47,6 @@ classdef Game
                game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck, game.rules.startingTrains, game.players, logger);
             end
             
-            logger = log4m.getLogger("logfile.txt");
-
             gameOver = false;
             playerIx = 1;
             turnCount = 0;

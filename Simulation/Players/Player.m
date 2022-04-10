@@ -171,7 +171,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 chosenCardsIndices = 1;
             end
 
-            activityLogStep = activityLogStep + " Player chose card(s) " ;
+            activityLogStep = activityLogStep + " Player chose card(s): " ;
             for i = 1:length(chosenCardsIndices)
                 activityLogStep = activityLogStep + string(chosenCardsIndices(i));
                 if i < length(chosenCardsIndices)

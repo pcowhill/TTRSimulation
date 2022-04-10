@@ -24,13 +24,16 @@ function RunSimulation(initFunc, varargin)
     % manage the log file being written to.  You can access the logger from multiple 
     % places in your code given its unique name.  (There is no need to pass around the 
     % logger's object handle throughout your code!)"
-    LOG_FILE_NAME = 'logfile.txt';
+    LOG_FILE_NAME= "logfile.txt";
+    if isfile(LOG_FILE_NAME)
+        delete(LOG_FILE_NAME);
+    end
     logger = log4m.getLogger(LOG_FILE_NAME);
 
     % Run nIterations of the game
     for iter = 1:nIterations
-        logger.writePlayerNameTurnNumber("RunSimulation","Game # " + iter + " was started.");
-        results(iter,1:nPlayers*nMetrics) = gameObj.simulateGame();
+        logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
+        results(iter,1:nPlayers*nMetrics) = gameObj.simulateGame(logger);
         fclose('all');
         delete(LOG_FILE_NAME);
         assignin('base', "gameObj", gameObj);
