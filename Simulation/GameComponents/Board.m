@@ -8,7 +8,8 @@ classdef Board < handle
     
     properties (SetAccess = private)
         initialRoutes Route % An array containing all of the route objects passed to the constructor
-        routeGraph          % MATLAB undirected multigraph object containing dynamic information about the routes
+        routeGraph graph    % MATLAB undirected multigraph object containing dynamic information about the routes
+        discardedTrains containers.Map % A map containing train pieces that have been discarded by players
     end
     
     methods
@@ -38,6 +39,9 @@ classdef Board < handle
 
             % Initialize route Graph
             obj.routeGraph = obj.initializeRouteGraph();
+
+            % Initialize the discard pile for train pieces
+            obj.discardedTrains = containers.Map();
 
         end
 
@@ -70,6 +74,7 @@ classdef Board < handle
             % init method
             % Sets up the existing Board object for a new game.
             board.routeGraph = board.initializeRouteGraph();
+            board.discardedTrains = containers.Map();
         end
 
         function tf = isOwned(obj, route)
@@ -144,6 +149,20 @@ classdef Board < handle
             obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB>
         end
 
+        function discardTrain(board, color, amount)
+            arguments
+                board Board
+                color Color
+                amount {mustBeInteger}
+            end
+
+            if isKey(board.discardedTrains, color.string)
+                board.discardedTrains(color.string) = board.discardedTrains(color.string) + amount;
+            else
+                board.discardedTrains(color.string) = amount;
+            end
+        end
+
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
             % Resets the ownership map
@@ -155,6 +174,10 @@ classdef Board < handle
             %given color
 
             numTrains = sum(board.routeGraph.Edges.Length(board.routeGraph.Edges.Owner==color));
+
+            if isKey(board.discardedTrains, color.string)
+                numTrains = numTrains + board.discardedTrains(color.string);
+            end
         end
 
         function unclaimedRoutes = getUnclaimedRoutes(board)
