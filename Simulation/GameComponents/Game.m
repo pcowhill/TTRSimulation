@@ -13,12 +13,10 @@ classdef Game
         trainsDeck TrainsDeck
 
         destinationsDeck DestinationsDeck
-
-        axesForFinalBoard
     end
     
     methods
-        function game = Game(board, players, rules, trainsDeck, destinationsDeck, axesForFinalBoard)
+        function game = Game(board, players, rules, trainsDeck, destinationsDeck)
             %GAME Initialize properties
             arguments
                 board Board
@@ -26,14 +24,12 @@ classdef Game
                 rules Rules
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
-                axesForFinalBoard
             end
             game.board = board;
             game.players = players;
             game.rules = rules;
             game.trainsDeck = trainsDeck;
             game.destinationsDeck = destinationsDeck;
-            game.axesForFinalBoard = axesForFinalBoard;
         end
         
         function results = simulateGame(game, logger)
@@ -67,10 +63,10 @@ classdef Game
 
             % Game results, metrics, and visualization - This will be stuff that can be collected at
             % the end of a game
-            results = processGameResults(game, playerIx, turnCount, finalScores);
+            results = processGameResults(game, playerIx, turnCount, finalScores, logger);
         end
 
-        function results = processGameResults(game, playerIx, turnCount, finalScores)
+        function results = processGameResults(game, playerIx, turnCount, finalScores, logger)
 
             % Calculate Player Specific Metrics
             lastPlayer = playerIx; 
@@ -103,7 +99,7 @@ classdef Game
             end
 
              % Print player activity log
-             activityLog = game.returnActivityLog();
+             activityLog = game.returnActivityLog(logger);
              activityLog
  
             % return finalScores, trainsPlayed, trainCardsLeft, destCardsCompleted,
@@ -112,33 +108,15 @@ classdef Game
             results = [finalScores, trainsPlayed, trainCardsLeft, ...
                 destCardsCompleted, playerTurns, routesClaimed];
  
-            % Display figure of the board colored based on the owners of the
-            % routes at the end of the game.
-            game.returnColoredBoard();
-        end
-
-        function p = returnColoredBoard(game)
-
-            edgeOwners=game.board.routeGraph.Edges.Owner;
-            edgeColors = repmat([0 0 0], length(edgeOwners), 1);    
-            tmp=find(edgeOwners=='red');
-            edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
-            tmp=find(edgeOwners=='yellow');
-            edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
-            tmp=find(edgeOwners=='green');
-            edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
-            tmp=find(edgeOwners=='blue');
-            edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
-
-            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
+            
         end
     end
 
     methods(Static)
-        function f = returnActivityLog()
+        function f = returnActivityLog(logger)
             % This function returns the file contents that were written in
             % the activity log file during the game.
-            f = fileread("logfile.txt");     
+            f = fileread(logger.fullpath);     
         end
     end
 end

@@ -43,6 +43,9 @@ classdef VariableUtilityPlayer < Player
             end
             player.checkDestinations=false;
             player.destinationsCompleted =zeros(1,length(player.destinationCardsHand));
+            player.routeIds=[];
+            player.routeUtilities=[];
+            player.routeLengths=[];
         end
 
         function chosenActions = chooseAction(player, board, possibleActions)
