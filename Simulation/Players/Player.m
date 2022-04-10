@@ -65,9 +65,9 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
                         takenActions.destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck, logger);
-                    elseif isfield(chosedActions, 'sacrificeTrain') && chosenActions.sacrificeTrain
+                    elseif isfield(chosenActions, 'sacrificeTrain') && chosenActions.sacrificeTrain
                         takenActions.wasTrainSacrificed = true;
-                        player.sacrificeTrain(trainsDeck, board);
+                        player.sacrificeTrain(trainsDeck, board, logger);
                     end
                     if rules.isTurnOver(possibleActions, takenActions)
                         turnOver = true;
@@ -161,16 +161,18 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);
         end
 
-        function sacrificeTrain(player, trainsDeck, board)
+        function sacrificeTrain(player, trainsDeck, board, logger)
             % Take a free action to discard a train piece for a random card
             arguments
                 player Player
                 trainsDeck TrainsDeck
                 board Board
+                logger
             end
             
+            logger.writePlayerTurnDetails("Sacrifice Train", "Player sacrificed a train to draw an additional card.");
             board.discardTrain(player.color, 1);
-            player.trainCardsHand = [player.trainCardsHand trainsDeck.dealCard()];
+            player.drawTrainCard(trainsDeck, TrainCard(Color.unknown), logger);
         end
 
         function drawDestinations(player, board, destinationsDeck, logger)

@@ -27,7 +27,7 @@ classdef TreacheryRules < Rules
             if (~isempty(takenActions.routesClaimed) || ...
                     length(takenActions.cardsDrawn) > 1 || ...
                     takenActions.destinationsDrawn) && ...
-                    (isfield(takenActions, 'wasTrainSacrificed') && takenActions.wasTrainSacrified)
+                    (isfield(takenActions, 'wasTrainSacrificed') && takenActions.wasTrainSacrificed)
                 % The turn is over
                 possibleActions.claimableRoutes = Route.empty;
                 possibleActions.claimableRouteColors = Color.empty;
@@ -37,21 +37,22 @@ classdef TreacheryRules < Rules
             elseif (~isempty(takenActions.routesClaimed) || ...
                     length(takenActions.cardsDrawn) > 1 || ...
                     takenActions.destinationsDrawn)
-                % The only thing the player can do is sacrifice a train
+                % The only thing the player can do is sacrifice a train if
+                % they have one
                 possibleActions.claimableRoutes = Route.empty;
                 possibleActions.claimableRouteColors = Color.empty;
                 possibleActions.drawableCards = TrainCard.empty;
                 possibleActions.canDrawDestinationCards = false;
-                possibleActions.canSacrificeTrain = true;
+                possibleActions.canSacrificeTrain = board.getNumOfTrains(player.color) > 0;
             else
                 if trainsDeck.drawable()
                     possibleActions.drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
                 end
 
-                if (isfield(takenActions, 'wasTrainSacrificed') && takenActions.wasTrainSacrified)
+                if (isfield(takenActions, 'wasTrainSacrificed') && takenActions.wasTrainSacrificed)
                     possibleActions.canSacrificeTrain = false;
                 else
-                    possibleActions.canSacrificeTrain = true;
+                    possibleActions.canSacrificeTrain = board.getNumOfTrains(player.color) > 0;
                 end
 
                 if ~isempty(takenActions.cardsDrawn)

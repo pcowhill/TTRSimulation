@@ -7,6 +7,17 @@ classdef TreacherousPlayer < Player
             obj@Player(playerNumber);
         end
 
+        function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)
+            arguments
+                player Player
+                startingHand TrainCard
+                board Board
+                destinationsDeck DestinationsDeck
+                nStartingTrains
+            end
+            % Intentionally does nothing.
+        end
+
         function chosenActions = chooseAction(player, board, possibleActions)
             arguments
                 player Player
@@ -19,9 +30,7 @@ classdef TreacherousPlayer < Player
             if (isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain)
                 % Always sacrifice a train for another card
                 chosenActions.sacrificeTrain = true;
-            end
-
-            if ~isempty(possibleActions.claimableRoutes)
+            elseif ~isempty(possibleActions.claimableRoutes)
                 % claim longest claimable route
                 [~, sortedIndices] = sort([possibleActions.claimableRoutes.length], 'descend');
                 chosenActions.route = sortedIndices(1);
@@ -35,15 +44,15 @@ classdef TreacherousPlayer < Player
             end
         end
 
-        function tf = canTakeAction(player, possibleActions)
+        function tf = cannotTakeAction(player, possibleActions)
             arguments
                 player Player
                 possibleActions struct
             end
             tf = (isempty(possibleActions.claimableRoutes) && ...
                   isempty(possibleActions.drawableCards) && ...
-                  ~possibleActions.canDrawDestinationCards) || ...
-                  (isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain);
+                  ~possibleActions.canDrawDestinationCards) && ...
+                  ~(isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)

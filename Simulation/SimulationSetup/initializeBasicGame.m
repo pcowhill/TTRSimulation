@@ -19,6 +19,8 @@ function game = initializeBasicGame(args)
                 players(ix) = LongRoutePlayer(ix);
             case "Destination Ticket Player"
                 players(ix) = DestinationTicketPlayer(ix);
+            case "Treacherous Player"
+                players(ix) = TreacherousPlayer(ix);
             otherwise
                 error("The following player strategy is not defined" + ...
                     "in initializeBasicGame: " + string(playerStrategies{ix}));
@@ -28,6 +30,8 @@ function game = initializeBasicGame(args)
     switch string(ruleset)
         case "Default Rules"
             rules = DefaultRules();
+        case "Treachery Rules"
+            rules = TreacheryRules();
         otherwise
             error("The following ruleset is not defined in " + ...
                  "initializeBasicGame: " + string(ruleset));
