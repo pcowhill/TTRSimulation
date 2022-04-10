@@ -8,7 +8,7 @@ classdef Board < handle
     
     properties (SetAccess = private)
         initialRoutes Route % An array containing all of the route objects passed to the constructor
-        routeGraph graph    % MATLAB undirected multigraph object containing dynamic information about the routes
+        routeGraph          % MATLAB undirected multigraph object containing dynamic information about the routes
         discardedTrains containers.Map % A map containing train pieces that have been discarded by players
     end
     
