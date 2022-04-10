@@ -16,7 +16,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         destinationCardsHand DestinationTicketCard = DestinationTicketCard.empty
 
         victoryPoints = 0
-
+                
         nStartingTrains = 0
 
         allPlayers
@@ -29,7 +29,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.color = Player.PlayerColors(playerNumber);
         end
 
-        function takeTurn(player, rules, board, trainsDeck, destinationsDeck)
+        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger)
             %takeTurn Carry out a single turn
             %   Carry out chosen action using the provided board and decks.
             %   Assume board and decks are Handle type classes so they
@@ -41,6 +41,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 board Board
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
+                logger log4m
             end
 
             takenActions = struct();
@@ -56,14 +57,15 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
                     if isfield(chosenActions, 'route') && chosenActions.route > 0
-                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route));
+                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger);
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
                     elseif isfield(chosenActions, 'card') && chosenActions.card > 0
                         takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
-                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card));
+                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger);
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
                         takenActions.destinationsDrawn=true;
-                        player.drawDestinations(board,destinationsDeck);
+                        player.drawDestinations(board,destinationsDeck, logger);
+
                     end
                     if rules.isTurnOver(possibleActions, takenActions)
                         turnOver = true;
@@ -77,7 +79,6 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         function addToVictoryPoints(player, points)
             player.victoryPoints = player.victoryPoints+points;
         end
-
     end
 
     methods (Abstract)
@@ -97,7 +98,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
     end
 
     methods (Sealed=true)
-        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players)
+        function initPlayer(player, startingHand, board, destinationsDeck, nStartingTrains, players, logger)
             %initPlayer Get starting hand and choose destination cards
             arguments
                 player Player
@@ -106,21 +107,21 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 destinationsDeck DestinationsDeck
                 nStartingTrains
                 players
+                logger log4m
             end
             player.destinationCardsHand = DestinationTicketCard.empty;
             player.victoryPoints = 0;
-            player.drawDestinations(board, destinationsDeck);
+            player.drawDestinations(board, destinationsDeck, logger);
             player.trainCardsHand = startingHand;
             player.nStartingTrains=nStartingTrains;
             player.allPlayers = players;
-
+            
             player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
         end
     end
 
-
     methods (Access=private, Sealed=true)
-        function claimRoute(player, rules, board, trainsDeck, route, color)
+        function claimRoute(player, rules, board, trainsDeck, route, color, logger)
            board.claim(route, player.color);
            indicesToDiscard = [];
            index = 1;
@@ -147,18 +148,38 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            assert(length(indicesToDiscard)==route.length && length(indicesToDiscard) == length(unique(indicesToDiscard)), "Player didn't discard number of cards to claim route");
            player.trainCardsHand(indicesToDiscard) = [];
            player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
+           activityLogStep = "claimed the route from " + string(route.locations(1)) + " to " + string(route.locations(2)) + " and earned " + rules.getRoutePoints(route) + " point(s).";
+           logger.writePlayerTurnDetails("Claim Route","Player " + activityLogStep);
         end
 
-        function drawTrainCard(player, trainsDeck, card)
+        function drawTrainCard(player, trainsDeck, card, logger)
             player.trainCardsHand = [player.trainCardsHand trainsDeck.drawCard(card)];
+                 
+            activityLogStep = "drew a " + string(card.color) + " card.";
+            logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);
         end
 
-        function drawDestinations(player, board, destinationsDeck)
+        function drawDestinations(player, board, destinationsDeck, logger)
             cards = destinationsDeck.draw(3);
             chosenCardsIndices = player.chooseDestinationCards(board, cards);
+            
+            activityLogStep = "drew three destination cards: 1) " + ...
+            string(cards(1).firstLocation) + " to " + string(cards(1).secondLocation) + ", 2) " +...
+            string(cards(2).firstLocation) + " to " + string(cards(2).secondLocation) + ", and 3) " + ...
+            string(cards(3).firstLocation) + " to " + string(cards(3).secondLocation) + ".";
             if isempty(chosenCardsIndices)
                 chosenCardsIndices = 1;
             end
+
+            activityLogStep = activityLogStep + " Player chose card(s): " ;
+            for i = 1:length(chosenCardsIndices)
+                activityLogStep = activityLogStep + string(chosenCardsIndices(i));
+                if i < length(chosenCardsIndices)
+                    activityLogStep = activityLogStep + ", ";
+                end
+            end
+
+            logger.writePlayerTurnDetails("Draw Destinations","Player " + activityLogStep);
             player.destinationCardsHand = [player.destinationCardsHand cards(chosenCardsIndices)];
             cards(chosenCardsIndices) = [];
             destinationsDeck.returnCards(cards);
