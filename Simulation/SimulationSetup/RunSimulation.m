@@ -72,9 +72,7 @@ function RunSimulation(initFunc, varargin)
     edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
     plot(gameObj.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', finalAxes.Board);
     assignin('base', 'gameObj', gameObj);
-    delete('gameObj.mat');
-    
-    
+    delete('gameObj.mat');   
 
     % Analyze the results of all the trials
     ProcessSimulationResults(results, nPlayers, finalAxes);
