@@ -45,15 +45,14 @@ classdef VariableUtilityPlayer < Player
             player.destinationsCompleted =zeros(1,length(player.destinationCardsHand));
         end
 
-        function [route, card, drawDestinationCards] = chooseAction(player, board, claimableRoutes, claimableRouteColors, drawableCards, drawDestinationCards)
+        function chosenActions = chooseAction(player, board, possibleActions)
             arguments
                 player Player
                 board Board
-                claimableRoutes Route
-                claimableRouteColors Color
-                drawableCards TrainCard
-                drawDestinationCards
+                possibleActions struct
             end
+
+            chosenActions = struct();
 
             % potential discount is based on number of trains players have
             % left
@@ -61,32 +60,32 @@ classdef VariableUtilityPlayer < Player
             player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
             disp(player.potentialDiscount);
 
-            drawDestinationCards=false;
+            chosenActions.drawDestinationCards=false;
             if player.checkDestinations
                 player.destinationsCompleted=Rules.getTicketsCompleted(board, player);
                 player.checkDestinations=false;
             end
             if player.shouldDrawDestinationCards(board)
-                drawDestinationCards=true;
-                card=0;
-                route=0;
+                chosenActions.drawDestinationCards=true;
+                chosenActions.card=0;
+                chosenActions.route=0;
                 player.checkDestinations=true;
-            elseif isempty(drawableCards)                
+            elseif isempty(possibleActions.drawableCards)                
                  % claim longest claimable route
-                [~, sortedIndices] = sort([claimableRoutes.length], 'descend');
-                route = sortedIndices(1);
-                card = 0;
-                drawDestinationCards = false;
+                [~, sortedIndices] = sort([possibleActions.claimableRoutes.length], 'descend');
+                chosenActions.route = sortedIndices(1);
+                chosenActions.card = 0;
+                chosenActions.drawDestinationCards = false;
             else
                 player.getUtilityValues(board, playerTrains([player.allPlayers.color]==player.color));
                 
                 maxUtility=0;
-                card=0;
-                route=0;
+                chosenActions.card=0;
+                chosenActions.route=0;
                 colorsInHand=containers.Map;
-                for ix=1:length(claimableRoutes)
-                    routeObj = claimableRoutes(ix);
-                    color = claimableRouteColors(ix);
+                for ix=1:length(possibleActions.claimableRoutes)
+                    routeObj = possibleActions.claimableRoutes(ix);
+                    color = possibleActions.claimableRouteColors(ix);
                     claimUtility=player.routeUtilities(player.routeIds==routeObj.id);
                     if claimUtility ~= 0 && claimUtility>maxUtility
                         if ~isKey(colorsInHand,color.string)
@@ -98,14 +97,13 @@ classdef VariableUtilityPlayer < Player
                         % check if utility of claiming route is higher than
                         % utility of having it in hand
                         if claimUtility >= handUtility && claimUtility > maxUtility
-                            route=ix;
+                            chosenActions.route=ix;
                             maxUtility=claimUtility;
                         end
                     end
                 end
-                for ix=1:length(drawableCards)
-                    cardObj = drawableCards(ix);
-                    utility = 0;
+                for ix=1:length(possibleActions.drawableCards)
+                    cardObj = possibleActions.drawableCards(ix);
                     if cardObj.color == Color.unknown
                         % set drawing card utility to average of all colors
                         utility = mean(cell2mat(player.colorUtilities.values))*player.potentialDiscount;
@@ -115,20 +113,30 @@ classdef VariableUtilityPlayer < Player
                     %check if card provides more utility
                     %draw non-multicolored card if multicolored card has
                     %same utility
-                    if utility>maxUtility || (utility==maxUtility && card>0 && drawableCards(card).color==Color.multicolored) || maxUtility==0
+                    if utility>maxUtility || (utility==maxUtility && chosenActions.card>0 && possibleActions.drawableCards(chosenActions.card).color==Color.multicolored) || maxUtility==0
                         maxUtility = utility;
-                        route=0;
-                        card=ix;                       
+                        chosenActions.route=0;
+                        chosenActions.card=ix;                       
                     end
                 end
                 %draw a card if no other actions provide utility
-                if route==0 && card==0 && ~drawDestinationCards
-                    card=length(drawableCards);
+                if chosenActions.route==0 && chosenActions.card==0 && ~chosenActions.drawDestinationCards
+                    chosenActions.card=length(possibleActions.drawableCards);
                 end
-                if route~=0
+                if chosenActions.route~=0
                     player.checkDestinations=true;
                 end
             end
+        end
+
+        function tf = cannotTakeAction(player, possibleActions)
+            arguments
+                player Player
+                possibleActions struct
+            end
+            tf = (isempty(possibleActions.claimableRoutes) && ...
+                  isempty(possibleActions.drawableCards) && ...
+                  ~possibleActions.canDrawDestinationCards);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
