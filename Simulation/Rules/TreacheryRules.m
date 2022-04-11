@@ -76,6 +76,7 @@ classdef TreacheryRules < Rules
                         possibleActions.canDrawDestinationCards = true;                
                     end
                     [possibleActions.claimableRoutes, possibleActions.claimableRouteColors] = rules.getClaimableRoutes(player, board);
+                    [possibleActions.stealableRoutes, possibleActions.stealableRouteColors] = rules.getStealableRoutes(player, board);
                 end
             end
         end
@@ -154,6 +155,72 @@ classdef TreacheryRules < Rules
             for playerIx=1:length(longestRouteWinners)
                 players(longestRouteWinners(playerIx)).addToVictoryPoints(rules.longestRoutePoints);
             end
+        end
+
+        function [claimableRoutes, claimableRouteColors] = getStealableRoutes(rules, player, board)
+            claimableRoutes = Route.empty;
+            claimableRouteColors = Color.empty;
+            if ~isempty(player.trainCardsHand)
+                claimedRoutes = board.getClaimedRoutes();
+                for iRoute = length(claimedRoutes):-1:1
+                    if board.owner(claimedRoutes(iRoute)) == player.color
+                        claimedRoutes(iRoute) = [];
+                    end
+                end
+
+                % get how many cards of each color the player has
+                colors = enumeration('Color');
+                colors(or(colors == Color.gray, colors == Color.unknown)) = [];
+                multicoloredIx = find(colors==Color.multicolored);
+                colorCounts = zeros(length(colors),1);
+                for ix=1:length(colorCounts)
+                    colorCounts(ix) = sum(colors(ix) == [player.trainCardsHand.color]);
+                end
+
+                nTrainsLeft = rules.startingTrains - board.getNumOfTrains(player.color);
+                
+                for ix=1:length(claimedRoutes)
+                    route = claimedRoutes(ix);
+                    cardsToSteal = TreacheryRules.numCardsToSteal(route);
+                    if route.length <= nTrainsLeft
+                        if route.color == Color.gray
+                            %if it's a gray route, find which colors the
+                            %player has enoug cards of to claim the route
+                            %including locomotives. Make sure not to count
+                            %locomotives twice                        
+                            useableColors = colors(and(colorCounts>0,cardsToSteal <= colorCounts+((colors~=Color.multicolored)*colorCounts(multicoloredIx))));
+                            for c=1:length(useableColors)
+                                claimableRoutes(end+1) = route;
+                                claimableRouteColors(end+1) = useableColors(c);
+                            end
+                        else
+                            % if it's a colored route, check if the player
+                            % has enough cards to claim it including
+                            % locomotives
+                            if colorCounts(colors==route.color)>0 && cardsToSteal <= colorCounts(colors==route.color)+((route.color~=Color.multicolored)*colorCounts(multicoloredIx))
+                                claimableRoutes(end+1) = route;
+                                claimableRouteColors(end+1) = route.color;
+                            end
+                            if colorCounts(multicoloredIx)>=cardsToSteal
+                                claimableRoutes(end+1)=route;
+                                claimableRouteColors(end+1)=Color.multicolored;
+                            end
+                        end
+                    end
+                end
+            end        
+        end
+    end
+
+    methods(Static)
+        function numCards = numCardsToSteal(route)
+            % numCardsToSteal method
+            % Returns the number of cards needed to steal a claimed route
+            % from another player.
+            arguments
+                route Route
+            end
+            numCards = route.length * 2;
         end
     end
 end

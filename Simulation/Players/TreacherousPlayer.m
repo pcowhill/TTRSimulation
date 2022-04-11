@@ -30,10 +30,11 @@ classdef TreacherousPlayer < Player
             if (isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain)
                 % Always sacrifice a train for another card
                 chosenActions.sacrificeTrain = true;
-            elseif ~isempty(possibleActions.claimableRoutes)
-                % claim longest claimable route
-                [~, sortedIndices] = sort([possibleActions.claimableRoutes.length], 'descend');
-                chosenActions.route = sortedIndices(1);
+            elseif (isfield(possibleActions, 'stealableRoutes') && ~isempty(possibleActions.stealableRoutes))
+                % steal longest stealable routes
+                [~, sortedIndices] = sort([possibleActions.stealableRoutes.length], 'descend');
+                chosenActions.stealRoute = sortedIndices(1);
+                chosenActions.route = 0;
                 chosenActions.card = 0;
                 chosenActions.drawDestinationCards = false;
             else
@@ -41,6 +42,13 @@ classdef TreacherousPlayer < Player
                 % draw random cards
                 chosenActions.card = length(possibleActions.drawableCards);
                 chosenActions.drawDestinationCards = false;
+
+                if chosenActions.card < 1
+                    [~, sortedIndices] = sort([possibleActions.claimableRoutes.length], 'descend');
+                    chosenActions.route = sortedIndices(1);
+                    chosenActions.card = 0;
+                    chosenActions.drawDestinationCards = false;
+                end
             end
         end
 

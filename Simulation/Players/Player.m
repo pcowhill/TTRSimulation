@@ -68,6 +68,11 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                     elseif isfield(chosenActions, 'sacrificeTrain') && chosenActions.sacrificeTrain
                         takenActions.wasTrainSacrificed = true;
                         player.sacrificeTrain(trainsDeck, board, logger);
+                    elseif isfield(chosenActions, 'stealRoute') && chosenActions.stealRoute > 0
+                        takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.stealableRoutes(chosenActions.stealRoute)];
+                        player.stealRoute(rules, board, trainsDeck, possibleActions.stealableRoutes(chosenActions.stealRoute), possibleActions.stealableRouteColors(chosenActions.stealRoute), logger);
+                    else
+                        turnOver = true;
                     end
                     if rules.isTurnOver(possibleActions, takenActions)
                         turnOver = true;
@@ -152,6 +157,52 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
            activityLogStep = "claimed the route from " + string(route.locations(1)) + " to " + string(route.locations(2)) + " and earned " + rules.getRoutePoints(route) + " point(s).";
            logger.writePlayerTurnDetails("Claim Route","Player " + activityLogStep);
+        end
+
+        function stealRoute(player, rules, board, trainsDeck, route, color, logger)
+            arguments
+                player Player
+                rules Rules
+                board Board
+                trainsDeck TrainsDeck
+                route Route
+                color Color
+                logger
+            end
+
+            % Discard the trains currently on the route
+            previousRouteOwnerColor = board.owner(route);
+            board.discardTrain(previousRouteOwnerColor, route.length);
+
+            board.claim(route, player.color)
+            indicesToDiscard = [];
+            index = 1;
+            numCardsRequired = TreacheryRules.numCardsToSteal(route);
+            % find the cards in the player hand to discard
+            while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand) && color~=Color.multicolored
+                if player.trainCardsHand(index).color == color
+                    indicesToDiscard = [indicesToDiscard index];
+                    trainsDeck.discard(player.trainCardsHand(index));
+                end
+                index = index+1;
+            end
+            if length(indicesToDiscard) < numCardsRequired
+                index = 1;
+                % use locomotives for remaining cards
+                while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand)
+                    if player.trainCardsHand(index).color == Color.multicolored
+                        indicesToDiscard = [indicesToDiscard index];
+                        trainsDeck.discard(player.trainCardsHand(index));
+                    end
+                    index = index+1;
+                end
+            end
+ 
+            assert(length(indicesToDiscard)==numCardsRequired && length(indicesToDiscard) == length(unique(indicesToDiscard)), "Player didn't discard number of cards to claim route");
+            player.trainCardsHand(indicesToDiscard) = [];
+            player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
+            activityLogStep = "stole the " + previousRouteOwnerColor.string + " Player's route from " + string(route.locations(1)) + " to " + string(route.locations(2)) + " and earned " + rules.getRoutePoints(route) + " point(s).";
+            logger.writePlayerTurnDetails("Steal Route","Player " + activityLogStep);
         end
 
         function drawTrainCard(player, trainsDeck, card, logger)
