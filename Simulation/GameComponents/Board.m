@@ -139,6 +139,16 @@ classdef Board < handle
 
             obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB>
         end
+        
+        function block(obj, route)
+            % block method
+            % Sets the current over of a route to unknown which signifies
+            % that the route is not owned by any of the player, and nor is
+            % it available to be claimed (since it is not gray).
+            % This DOES overwrite the current owner if there is one.
+
+            obj.claim(route, Color.unknown);
+        end
 
         function discardTrain(board, color, amount)
             arguments

@@ -26,6 +26,7 @@ classdef TreacheryRules < Rules
 
             if (~isempty(takenActions.routesClaimed) || ...
                     length(takenActions.cardsDrawn) > 1 || ...
+                    ~isempty(takenActions.routesBlocked) || ...
                     takenActions.destinationsDrawn) && ...
                     (isfield(takenActions, 'wasTrainSacrificed') && takenActions.wasTrainSacrificed)
                 % The turn is over
@@ -34,6 +35,7 @@ classdef TreacheryRules < Rules
                 possibleActions.drawableCards = TrainCard.empty;
                 possibleActions.canDrawDestinationCards = false;
                 possibleActions.canSacrificeTrain = false;
+                possibleActions.blockableRotues = Route.empty;
             elseif (~isempty(takenActions.routesClaimed) || ...
                     length(takenActions.cardsDrawn) > 1 || ...
                     takenActions.destinationsDrawn)
@@ -77,6 +79,7 @@ classdef TreacheryRules < Rules
                     end
                     [possibleActions.claimableRoutes, possibleActions.claimableRouteColors] = rules.getClaimableRoutes(player, board);
                     [possibleActions.stealableRoutes, possibleActions.stealableRouteColors] = rules.getStealableRoutes(player, board);
+                    [possibleActions.blockableRoutes, possibleActions.blockableRouteColors] = rules.getBlockableRoutes(player, board);
                 end
             end
         end
@@ -210,6 +213,55 @@ classdef TreacheryRules < Rules
                 end
             end        
         end
+
+        function [claimableRoutes, claimableRouteColors] = getBlockableRoutes(rules, player, board)
+            claimableRoutes = Route.empty;
+            claimableRouteColors = Color.empty;
+            if ~isempty(player.trainCardsHand)
+                unclaimedRoutes = board.getUnclaimedRoutes();
+
+                % get how many cards of each color the player has
+                colors = enumeration('Color');
+                colors(or(colors == Color.gray, colors == Color.unknown)) = [];
+                multicoloredIx = find(colors==Color.multicolored);
+                colorCounts = zeros(length(colors),1);
+                for ix=1:length(colorCounts)
+                    colorCounts(ix) = sum(colors(ix) == [player.trainCardsHand.color]);
+                end
+
+                nTrainsLeft = rules.startingTrains - board.getNumOfTrains(player.color);
+                
+                for ix=1:length(unclaimedRoutes)
+                    route = unclaimedRoutes(ix);
+                    cardsToBlock = TreacheryRules.numCardsToBlock(route);
+                    if route.length <= nTrainsLeft
+                        if route.color == Color.gray
+                            %if it's a gray route, find which colors the
+                            %player has enoug cards of to claim the route
+                            %including locomotives. Make sure not to count
+                            %locomotives twice                        
+                            useableColors = colors(and(colorCounts>0,cardsToBlock <= colorCounts+((colors~=Color.multicolored)*colorCounts(multicoloredIx))));
+                            for c=1:length(useableColors)
+                                claimableRoutes(end+1) = route;
+                                claimableRouteColors(end+1) = useableColors(c);
+                            end
+                        else
+                            % if it's a colored route, check if the player
+                            % has enough cards to claim it including
+                            % locomotives
+                            if colorCounts(colors==route.color)>0 && cardsToBlock <= colorCounts(colors==route.color)+((route.color~=Color.multicolored)*colorCounts(multicoloredIx))
+                                claimableRoutes(end+1) = route;
+                                claimableRouteColors(end+1) = route.color;
+                            end
+                            if colorCounts(multicoloredIx)>=cardsToBlock
+                                claimableRoutes(end+1)=route;
+                                claimableRouteColors(end+1)=Color.multicolored;
+                            end
+                        end
+                    end
+                end
+            end        
+        end
     end
 
     methods(Static)
@@ -221,6 +273,16 @@ classdef TreacheryRules < Rules
                 route Route
             end
             numCards = route.length * 2;
+        end
+
+        function numCards = numCardsToBlock(route)
+            % numCardsToBlock method
+            % Returns the number of cards needed to block an unclaimed
+            % route and prevent other players from claiming it.
+            arguments
+                route Route
+            end
+            numCards = ceil(route.length / 2);
         end
     end
 end

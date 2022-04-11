@@ -37,6 +37,13 @@ classdef TreacherousPlayer < Player
                 chosenActions.route = 0;
                 chosenActions.card = 0;
                 chosenActions.drawDestinationCards = false;
+            elseif (isfield(possibleActions, 'blockableRoutes') && ~isempty(possibleActions.blockableRoutes))
+                % block longest blockable route
+                [~, sortedIndices] = sort([possibleActions.blockableRoutes.length], 'descend');
+                chosenActions.blockRoute = sortedIndices(1);
+                chosenActions.route = 0;
+                chosenActions.card = 0;
+                chosenActions.drawDestinationCards = false;
             else
                 chosenActions.route = 0;
                 % draw random cards
@@ -60,7 +67,8 @@ classdef TreacherousPlayer < Player
             tf = (isempty(possibleActions.claimableRoutes) && ...
                   isempty(possibleActions.drawableCards) && ...
                   ~possibleActions.canDrawDestinationCards) && ...
-                  ~(isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain);
+                  ~(isfield(possibleActions, 'canSacrificeTrain') && possibleActions.canSacrificeTrain) && ...
+                  ~(isfield(possibleActions, 'blockableRoutes') && ~isempty(possibleActions.blockableRoutes));
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)

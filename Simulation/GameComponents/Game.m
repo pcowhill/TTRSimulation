@@ -129,6 +129,8 @@ classdef Game
             edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
             tmp=find(edgeOwners=='blue');
             edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
+            tmp=find(edgeOwners=="unknown");
+            edgeColors(tmp, :)=repmat([0.5, 0.5, 0.5], length(tmp), 1);
 
             p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
         end
@@ -138,7 +140,7 @@ classdef Game
         function f = returnActivityLog()
             % This function returns the file contents that were written in
             % the activity log file during the game.
-            f = fileread("logfile.txt");     
+            f = fileread("logfile.txt");
         end
     end
 end
