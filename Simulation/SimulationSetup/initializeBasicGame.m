@@ -33,7 +33,7 @@ function game = initializeBasicGame(args)
                  "initializeBasicGame: " + string(ruleset));
     end
 
-    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK, finalAxes.Board);
+    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK);
 
 end
 

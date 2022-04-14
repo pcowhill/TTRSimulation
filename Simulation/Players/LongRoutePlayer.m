@@ -14,9 +14,9 @@ classdef LongRoutePlayer < VariableUtilityPlayer
                 board Board
                 destinationCards DestinationTicketCard
             end
-            % choose smallest point value
+            % choose smallest point values
             [~, sortedIndices] = sort([destinationCards.pointValue]);
-            keptCardIndices=sortedIndices(1);
+            keptCardIndices=sortedIndices([1 2]);
         end
 
         function drawCards = shouldDrawDestinationCards(player,board)

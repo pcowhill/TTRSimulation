@@ -38,15 +38,15 @@ classdef BoardTest < matlab.unittest.TestCase
             obj.theBoard.claim(ROUTE_LOS_ANGELES_TO_SAN_FRANCISCO_B, RED);
 
             % Check that the claimed routes are owned
-            obj.verifyEqual(300, obj.theBoard.getNumOfTrains(Color.gray))
-            obj.verifyEqual(6, obj.theBoard.getNumOfTrains(Color.yellow))
-            obj.verifyEqual(3, obj.theBoard.getNumOfTrains(Color.red))
+            obj.verifyEqual(obj.theBoard.getNumOfTrains(Color.gray),300)
+            obj.verifyEqual(obj.theBoard.getNumOfTrains(Color.yellow),6)
+            obj.verifyEqual(obj.theBoard.getNumOfTrains(Color.red),3)
 
             % Reset the ownership map
             obj.theBoard.resetRouteOwners();
 
             % Check that no routes are owned
-            obj.verifyEqual(309, obj.theBoard.getNumOfTrains(Color.gray))
+            obj.verifyEqual(obj.theBoard.getNumOfTrains(Color.gray),309)
         end
 
         function claimerOfRouteBecomesOwner(obj)

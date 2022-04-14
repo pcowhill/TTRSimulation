@@ -6,6 +6,7 @@ function RunSimulation(initFunc, varargin)
     rngSeed = varargin{5};
     finalAxes = varargin{6};
     nMetrics = 6;
+    nWorkers = varargin{7};
 
     % Note: "rng controls the global stream, which determines 
     % how rand, randi, randn, and randperm functions produce a 
@@ -19,25 +20,59 @@ function RunSimulation(initFunc, varargin)
             rng('default');
     end
    
-    % Instantiate logger -- "The logger will be "globally available as a
-    % singleton instance.  This is because a single instance of Logger must
-    % manage the log file being written to.  You can access the logger from multiple 
-    % places in your code given its unique name.  (There is no need to pass around the 
-    % logger's object handle throughout your code!)"
-    LOG_FILE_NAME= "logfile.txt";
-    if isfile(LOG_FILE_NAME)
-        delete(LOG_FILE_NAME);
-    end
-    logger = log4m.getLogger(LOG_FILE_NAME);
+    results=zeros(nIterations,nPlayers*nMetrics);
 
+    finalGameObj=Game.empty;
     % Run nIterations of the game
-    for iter = 1:nIterations
+    parfor (iter = 1:nIterations, nWorkers)
+        % Instantiate logger -- "The logger will be "globally available as a
+        % singleton instance.  This is because a single instance of Logger must
+        % manage the log file being written to.  You can access the logger from multiple 
+        % places in your code given its unique name.  (There is no need to pass around the 
+        % logger's object handle throughout your code!)"
+        LOG_FILE_NAME= strcat("logfile",num2str(iter),".txt");
+        if isfile(LOG_FILE_NAME)
+            delete(LOG_FILE_NAME);
+        end
+        logger = log4m.getLogger(LOG_FILE_NAME);
         logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
-        results(iter,1:nPlayers*nMetrics) = gameObj.simulateGame(logger);
+        results(iter,:) = gameObj.simulateGame(logger);
         fclose('all');
-        delete(LOG_FILE_NAME);
-        assignin('base', "gameObj", gameObj);
+        if isfile(LOG_FILE_NAME)
+            delete(LOG_FILE_NAME);
+        end
+        
+        if iter==nIterations
+            assignin('base', 'gameObj', gameObj);
+            evalin('base', "save('gameObj')")            
+        end
     end
+
+    %For some reason sometimes log files won't actually get deleted in the
+    %parfor loop
+    for iter=1:nIterations
+        LOG_FILE_NAME= strcat("logfile",num2str(iter),".txt");
+        if isfile(LOG_FILE_NAME)
+            delete(LOG_FILE_NAME);
+        end
+    end
+
+    % Display figure of the board colored based on the owners of the
+    % routes at the end of the game.
+    load("gameObj.mat");
+    edgeOwners=gameObj.board.routeGraph.Edges.Owner;
+    edgeColors = repmat([0 0 0], length(edgeOwners), 1);    
+    tmp=find(edgeOwners=='red');
+    edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
+    tmp=find(edgeOwners=='yellow');
+    edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
+    tmp=find(edgeOwners=='green');
+    edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
+    tmp=find(edgeOwners=='blue');
+    edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
+    plot(gameObj.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', finalAxes.Board);
+    assignin('base', 'gameObj', gameObj);
+    delete('gameObj.mat');   
 
     % Analyze the results of all the trials
     ProcessSimulationResults(results, nPlayers, finalAxes);

@@ -162,14 +162,20 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         function drawDestinations(player, board, destinationsDeck, logger)
             cards = destinationsDeck.draw(3);
             chosenCardsIndices = player.chooseDestinationCards(board, cards);
-            
+
+            if isempty(player.destinationCardsHand)
+                if length(chosenCardsIndices) < 2
+                    chosenCardsIndices = [1 2];
+                end
+            else
+                if isempty(chosenCardsIndices)
+                    chosenCardsIndices=1;
+                end
+            end
             activityLogStep = "drew three destination cards: 1) " + ...
             string(cards(1).firstLocation) + " to " + string(cards(1).secondLocation) + ", 2) " +...
             string(cards(2).firstLocation) + " to " + string(cards(2).secondLocation) + ", and 3) " + ...
             string(cards(3).firstLocation) + " to " + string(cards(3).secondLocation) + ".";
-            if isempty(chosenCardsIndices)
-                chosenCardsIndices = 1;
-            end
 
             activityLogStep = activityLogStep + " Player chose card(s): " ;
             for i = 1:length(chosenCardsIndices)

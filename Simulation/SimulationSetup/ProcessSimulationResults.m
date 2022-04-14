@@ -18,7 +18,7 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes)
     % Insert metrics about the statistical significance of the win
     % rates
     % Chi-Square Significance Test
-    winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers);
+    winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
     reportStatSignificanceWinRates(nPlayers, winRates, nIters);
 end
 
