@@ -48,7 +48,7 @@ classdef Game
             turnCount = 0;
             % Play game until rules say it's over
             while ~gameOver
-               turnCount = turnCount + (playerIx==1)
+               turnCount = turnCount + (playerIx==1);
                logger.writeTurnAndPlayer("Turn " + turnCount, "Player " + playerIx);
                game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger);   
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);

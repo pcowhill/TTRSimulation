@@ -61,7 +61,6 @@ classdef VariableUtilityPlayer < Player
             % left
             playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
             player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
-            disp(player.potentialDiscount);
 
             chosenActions.drawDestinationCards=false;
             if player.checkDestinations
