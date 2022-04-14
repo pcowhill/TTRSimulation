@@ -4,7 +4,7 @@ classdef DeviantPlayer < VariableUtilityPlayer
     
     methods (Access = public)
         function obj = DeviantPlayer(playerNumber)
-            obj@VariableUtilityPlayer(playerNumber, 1, 0, 1);
+            obj@VariableUtilityPlayer(playerNumber, 0, 0, 1);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
@@ -21,6 +21,11 @@ classdef DeviantPlayer < VariableUtilityPlayer
 
         function drawCards = shouldDrawDestinationCards(player,board)
             drawCards=false;
+        end
+
+        function getPotentialDiscount(player,board)
+            playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
+            player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
         end
 
     end

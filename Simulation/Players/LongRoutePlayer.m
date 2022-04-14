@@ -23,5 +23,10 @@ classdef LongRoutePlayer < VariableUtilityPlayer
             drawCards=false;
         end
 
+        function getPotentialDiscount(player,board)
+            playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
+            player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^4;
+        end
+
     end
 end

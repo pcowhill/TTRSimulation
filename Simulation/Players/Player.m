@@ -22,6 +22,8 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         publicHand TrainCard = TrainCard.empty
 
         allPlayers
+
+        turnCount
     end
 
     methods (Access = public)
@@ -51,6 +53,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             takenActions.cardsDrawn = TrainCard.empty;
             takenActions.destinationsDrawn = false;
             turnOver = false;
+            player.turnCount = player.turnCount+1;
 
             while ~turnOver
                 possibleActions = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, takenActions);
@@ -117,6 +120,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.trainCardsHand = startingHand;
             player.nStartingTrains=nStartingTrains;
             player.allPlayers = players;
+            player.turnCount=0;
             
             player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
         end

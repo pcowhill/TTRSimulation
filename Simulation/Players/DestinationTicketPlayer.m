@@ -5,7 +5,7 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
 
     methods (Access = public)
         function obj = DestinationTicketPlayer(playerNumber)
-            obj@VariableUtilityPlayer(playerNumber, 0.1, 1, 0);
+            obj@VariableUtilityPlayer(playerNumber, 0.1, 0.9, 0);
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
@@ -33,6 +33,11 @@ classdef DestinationTicketPlayer < VariableUtilityPlayer
             else
                 drawCards=false;
             end
+        end
+
+        function getPotentialDiscount(player,board)
+            playerTrains = Rules.getPlayerTrains(board, player.allPlayers, player.nStartingTrains);
+            player.potentialDiscount=1-(min(playerTrains)/player.nStartingTrains-1)^6;
         end
 
     end

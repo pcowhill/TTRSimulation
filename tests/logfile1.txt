@@ -1,0 +1,36 @@
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a multicolored card.
+	Draw Train Card - Player drew a multicolored card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Destinations - Player drew three destination cards: 1) Atlanta to Charleston, 2) Atlanta to Charleston, and 3) Atlanta to Charleston. Player chose card(s): 1, 2
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a multicolored card.
+	Draw Train Card - Player drew a multicolored card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Destinations - Player drew three destination cards: 1) Atlanta to Charleston, 2) Atlanta to Charleston, and 3) Atlanta to Charleston. Player chose card(s): 1, 2
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a blue card.
+	Draw Train Card - Player drew a multicolored card.
+	Draw Train Card - Player drew a multicolored card.
+	Claim Route - Player claimed the route from Atlanta to Charleston and earned 5 point(s).
+	Draw Destinations - Player drew three destination cards: 1) Atlanta to Charleston, 2) Atlanta to Charleston, and 3) Atlanta to Charleston. Player chose card(s): 1, 2
