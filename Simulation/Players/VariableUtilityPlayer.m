@@ -62,7 +62,6 @@ classdef VariableUtilityPlayer < Player
             chosenActions = struct();
 
             player.getPotentialDiscount(board);
-            disp(player.potentialDiscount);
 
             chosenActions.drawDestinationCards=false;
             if player.checkDestinations
@@ -115,11 +114,12 @@ classdef VariableUtilityPlayer < Player
                     if ~isKey(colorsInHand,cardObj.color.string)
                         colorsInHand(cardObj.color.string) = length(find([player.trainCardsHand.color]==cardObj.color));
                     end
+                    inHandWeight=(colorsInHand(cardObj.color.string)+player.potentialDiscount)/(colorsInHand(cardObj.color.string)+1);
                     if cardObj.color == Color.unknown
                         % set drawing card utility to average of all colors
-                        utility = mean(cell2mat(player.colorUtilities.values));
+                        utility = mean(cell2mat(player.colorUtilities.values))*player.potentialDiscount;
                     else
-                        utility = player.colorUtilities(cardObj.color.string);
+                        utility = player.colorUtilities(cardObj.color.string)*inHandWeight;
                     end
                     %check if card provides more utility
                     %draw non-multicolored card if multicolored card has
@@ -213,88 +213,93 @@ classdef VariableUtilityPlayer < Player
                 route = unclaimedRoutes(ix);
                 player.routeLengths(ix) = route.length;
 
-                %length utility score
-                lengthUtility=VariableUtilityPlayer.getRouteLengthUtility(route);
-                player.routeUtilities(ix) = player.lengthWeight * lengthUtility;
-
-
-                %destination ticket utility score
-                if player.destinationTicketWeight>0
-                    destinationUtility=0;
-
-                    destGraphCopy=destinationGraph;
-                    e=edgeIndices(ix);
-                    destGraphCopy.Edges.Weight(e)=0;
-                    for destIx=1:length(unfinishedDestinations)
-                        d=baselineDistances(destIx);
-                        dest = unfinishedDestinations(destIx);
-
-                        %general theory: check how much claiming this route
-                        %would reduce the length of the shortest path to
-                        %complete the destination ticket (player claimed
-                        %routes are considered to be 0 length)
-                        if d~=Inf && d <= trainsLeft
-                            [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
-                            if newd~=Inf
-                                %utility is linear based on shortest path
-                                %length reduction and destination ticket point
-                                %value
-                                destinationUtility = max(destinationUtility,...
-                                    VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue));
+                if route.length > trainsLeft
+                    player.routeUtilities(ix) = 0;
+                else
+    
+                    %length utility score
+                    lengthUtility=VariableUtilityPlayer.getRouteLengthUtility(route);
+                    player.routeUtilities(ix) = player.lengthWeight * lengthUtility;
+    
+    
+                    %destination ticket utility score
+                    if player.destinationTicketWeight>0
+                        destinationUtility=0;
+    
+                        destGraphCopy=destinationGraph;
+                        e=edgeIndices(ix);
+                        destGraphCopy.Edges.Weight(e)=0;
+                        for destIx=1:length(unfinishedDestinations)
+                            d=baselineDistances(destIx);
+                            dest = unfinishedDestinations(destIx);
+    
+                            %general theory: check how much claiming this route
+                            %would reduce the length of the shortest path to
+                            %complete the destination ticket (player claimed
+                            %routes are considered to be 0 length)
+                            if d~=Inf && d <= trainsLeft
+                                [~,newd]=shortestpath(destGraphCopy,dest.firstLocation.string,dest.secondLocation.string);
+                                if newd~=Inf
+                                    %utility is linear based on shortest path
+                                    %length reduction and destination ticket point
+                                    %value
+                                    destinationUtility = max(destinationUtility,...
+                                        VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue));
+                                end
                             end
                         end
+                        player.routeUtilities(ix) = player.routeUtilities(ix)+...
+                                player.destinationTicketWeight*destinationUtility;
                     end
-                    player.routeUtilities(ix) = player.routeUtilities(ix)+...
-                            player.destinationTicketWeight*destinationUtility;
-                end
-
-                if player.deviantWeight > 0
-                    deviantUtility=0;
-
-                    for playerIx=1:length(player.allPlayers)
-                        p = player.allPlayers(playerIx);
-                        if p.color ~= player.color
-                            if route.color ~= Color.gray
-                                cardsInPlayersHand=length(find([p.publicHand.color]==route.color));
-                                %colorFactor is based on how many cards of
-                                %that color the opposing player has drawn,
-                                %making it more likely they will try to
-                                %claim this route
-                                colorFactor = max(0,min(1,(cardsInPlayersHand-max(0,cardsInPlayersHand-route.length)*0.5)/route.length));
-                                colorFactor = sqrt(colorFactor);
-                                colorFactor = 0.2+0.8*colorFactor;
-                            else
-                                colorFactor = 0.2;
+    
+                    if player.deviantWeight > 0
+                        deviantUtility=0;
+    
+                        for playerIx=1:length(player.allPlayers)
+                            p = player.allPlayers(playerIx);
+                            if p.color ~= player.color
+                                if route.color ~= Color.gray
+                                    cardsInPlayersHand=length(find([p.publicHand.color]==route.color));
+                                    %colorFactor is based on how many cards of
+                                    %that color the opposing player has drawn,
+                                    %making it more likely they will try to
+                                    %claim this route
+                                    colorFactor = max(0,min(1,(cardsInPlayersHand-max(0,cardsInPlayersHand-route.length)*0.5)/route.length));
+                                    colorFactor = sqrt(colorFactor);
+                                    colorFactor = 0.2+0.8*colorFactor;
+                                else
+                                    colorFactor = 0.2;
+                                end
+                                
+                                %add utility based on the length of the route
+                                %and if the opposing player is accumulating the cards to
+                                %be able to claim it
+                                deviantRouteLengthUtility = colorFactor*lengthUtility/(length(player.allPlayers)-1);
+                                deviantUtility = deviantUtility + deviantRouteLengthUtility;
+    
+                                %add utility if this route helps connect other
+                                %routes claimed by the opposing player,
+                                %attempting to block completion of destination
+                                %cards
+                                destGraphCopy=allDestinationGraphs{playerIx};
+                                e=allEdgeIndices{playerIx}(ix);
+                                destGraphCopy.Edges.Weight(e)=0;
+                                d=nodeDistances{playerIx};
+                                newd=distances(destGraphCopy,allPlayerNodes{playerIx},allPlayerNodes{playerIx});
+                                if ~isempty(d)
+                                    reduction=min(newd./d,[],2);
+                                    %12 is about the average point value for a
+                                    %destination ticket card
+                                    deviantConnectionUtility=colorFactor*12*(0.5*max(0,1-reduction(1))+0.5*max(0,1-reduction(2)));
+                                    deviantUtility=deviantUtility+deviantConnectionUtility;
+                                end
+    
                             end
-                            
-                            %add utility based on the length of the route
-                            %and if the opposing player is accumulating the cards to
-                            %be able to claim it
-                            deviantRouteLengthUtility = colorFactor*lengthUtility/(length(player.allPlayers)-1);
-                            deviantUtility = deviantUtility + deviantRouteLengthUtility;
-
-                            %add utility if this route helps connect other
-                            %routes claimed by the opposing player,
-                            %attempting to block completion of destination
-                            %cards
-                            destGraphCopy=allDestinationGraphs{playerIx};
-                            e=allEdgeIndices{playerIx}(ix);
-                            destGraphCopy.Edges.Weight(e)=0;
-                            d=nodeDistances{playerIx};
-                            newd=distances(destGraphCopy,allPlayerNodes{playerIx},allPlayerNodes{playerIx});
-                            if ~isempty(d)
-                                reduction=min(newd./d,[],2);
-                                %12 is about the average point value for a
-                                %destination ticket card
-                                deviantConnectionUtility=colorFactor*12*(0.5*max(0,1-reduction(1))+0.5*max(0,1-reduction(2)));
-                                deviantUtility=deviantUtility+deviantConnectionUtility;
-                            end
-
                         end
+    
+                        player.routeUtilities(ix) = player.routeUtilities(ix)+...
+                                player.deviantWeight*deviantUtility;
                     end
-
-                    player.routeUtilities(ix) = player.routeUtilities(ix)+...
-                            player.deviantWeight*deviantUtility;
                 end
             end
         end
