@@ -62,6 +62,7 @@ classdef PlayerTest < matlab.unittest.TestCase
             rules.action=2;
             player.takeTurn(rules,board,trainsDeckMulti,destinationsDeck, logger);
             obj.verifyEqual(player.destinationCardsHand,repmat(DestinationTicketCard("Atlanta","Charleston",10),1,2), "Draw destination tickets");
+
  
             delete(logFileName);            
         end
