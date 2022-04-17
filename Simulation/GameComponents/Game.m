@@ -13,8 +13,12 @@ classdef Game
         trainsDeck TrainsDeck
 
         destinationsDeck DestinationsDeck
+
+        axesForFinalBoard
+
+        nTimesRouteClaimedByWinner
     end
-    
+
     methods
         function game = Game(board, players, rules, trainsDeck, destinationsDeck)
             %GAME Initialize properties
@@ -30,6 +34,7 @@ classdef Game
             game.rules = rules;
             game.trainsDeck = trainsDeck;
             game.destinationsDeck = destinationsDeck;
+            game.nTimesRouteClaimedByWinner = zeros(1,length(game.board.initialRoutes));
         end
         
         function results = simulateGame(game, logger)
@@ -46,6 +51,9 @@ classdef Game
             gameOver = false;
             playerIx = 1;
             turnCount = 0;
+            numTimesAhead = zeros(1,length(game.players));
+            numTimesAheadLong = zeros(1,length(game.players));
+
             % Play game until rules say it's over
             while ~gameOver
                turnCount = turnCount + (playerIx==1);
@@ -54,10 +62,29 @@ classdef Game
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
                playerIx = mod(playerIx, length(game.players))+1;
+
+                % Balance Measure -- Result Known Long Ahead of Time? -- Track who is winning during each turn
+                % in the game - measure of balance  -- added to the Game.m class
+               if playerIx == 1 % Once all players have taken turns, see who has the most points for that turnCount
+                    % Check current scores, not including the longest route
+                    maxVictoryPts = max([game.players.victoryPoints]);
+                    idx = find(maxVictoryPts == [game.players.victoryPoints]);
+                    numTimesAhead(idx) = numTimesAhead(idx) + 1;
+                  
+                    % Check current scores, factoring in longest route
+                    longRoutePts = max([game.rules.getLongestRoute(game.board, game.players)]);
+                    longRouteIdx = find(longRoutePts == [game.rules.getLongestRoute(game.board, game.players)]);
+                    scoreWithLongestRoute = [game.players.victoryPoints] + (ismember(1:length(game.players),longRouteIdx))*[game.rules.longestRoutePoints];
+                    maximum = max(scoreWithLongestRoute);
+                    maxIdx = find(maximum==max(scoreWithLongestRoute));
+                    numTimesAheadLong(1,maxIdx) = numTimesAheadLong(1,maxIdx) + 1;
+               end
             end
             
+            numTimesAhead
+            numTimesAheadLong
+            
             % Calculate Final Scores
-
             game.rules.updateEndgameScores(game.board, game.players);
             finalScores=[game.players.victoryPoints];
 
@@ -107,9 +134,43 @@ classdef Game
             % these are arrays of size 1 * nPlayers
             results = [finalScores, trainsPlayed, trainCardsLeft, ...
                 destCardsCompleted, playerTurns, routesClaimed];
- 
+
+            % Increment number of times each route claimed by winner(s)
+            winningScore = max(finalScores);
+            winnerIdx = [find(winningScore == finalScores)];
+            winnerColor = [game.players(winnerIdx).color]
             
+            % in the rare case there is more than one winner, loop over the winner
+            % colors array
+            routeOwners = game.board.routeGraph.Edges.Owner;
+            for i = 1:length(winnerColor)
+               idx=find(routeOwners==winnerColor(i));
+               game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
+            end
+
+            % Keep track of top winning routes -- how powerful is a given
+            % action or combination of actions?
+            winningRoutesTbl = [{game.board.routeGraph.Edges.EndNodes}, {num2cell(game.nTimesRouteClaimedByWinner')}]
+            [winningRoutesTbl{1}, winningRoutesTbl{2}]      
         end
+
+        function p = returnColoredBoard(game)
+        % This function is used explicitly by the code. This would be for
+        % allowing the app to call and get the colored board.
+            edgeOwners=game.board.routeGraph.Edges.Owner;
+            edgeColors = repmat([0 0 0], length(edgeOwners), 1);    
+            tmp=find(edgeOwners=='red');
+            edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
+            tmp=find(edgeOwners=='yellow');
+            edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='green');
+            edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='blue');
+            edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
+
+            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
+        end
+       
     end
 
     methods(Static)
