@@ -35,7 +35,7 @@ classdef TreacheryRules < Rules
                 possibleActions.drawableCards = TrainCard.empty;
                 possibleActions.canDrawDestinationCards = false;
                 possibleActions.canSacrificeTrain = false;
-                possibleActions.blockableRotues = Route.empty;
+                possibleActions.blockableRoutes = Route.empty;
             elseif (~isempty(takenActions.routesClaimed) || ...
                     length(takenActions.cardsDrawn) > 1 || ...
                     takenActions.destinationsDrawn)
