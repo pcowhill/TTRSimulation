@@ -1,5 +1,5 @@
 function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResults, nIterations, rngSeed, nWorkers, players, ruleClass)
-    summaryResults.allSimResults = allSimResults
+    summaryResults.allSimResults = allSimResults;
     nIters = size(allSimResults,1);    
     
     % Calculate Average Scores, Number of Trains Played, Number of Train
@@ -11,20 +11,22 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResult
     numDestCardCols = 3*nPlayers+1:4*nPlayers;
     turnsCols = 4*nPlayers+1:5*nPlayers;
     routesCols = 5*nPlayers+1:6*nPlayers;
+    
+    playerNames = "Player " + [1:nPlayers];
 
     % Process, plot, and print statistics related to Averages and Standard
     % Deviations
-    summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes);
+    summaryResults = processAvgsAndSDs(nPlayers, nIters, playerNames, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes);
 
     % Insert metrics about the statistical significance of the win
     % rates -- Chi-Square Significance Test
-    summaryResults = processWinRates(nIters, allSimResults, scoresCols, nPlayers, summaryResults);
+    summaryResults = processWinRates(nIters, playerNames, allSimResults, scoresCols, nPlayers, summaryResults);
     
     % Print information about correlations between key statistics
     summaryResults = processCorrelationStats(allSimResults, nPlayers, summaryResults, nIters); 
    
     % Present a few other simple "closeness" measures
-    summaryResults = calculateClosenessMetrics(allSimResults, scoresCols, nIters, summaryResults);
+    summaryResults = calculateClosenessMetrics(nPlayers, playerNames, allSimResults, scoresCols, nIters, summaryResults);
 
     % Save results if requested by the user
     if saveResults
@@ -48,7 +50,7 @@ end
 
 
 %% processAvgsAndSDs Functions: processAvgsAndSDs, plotPlayerStats, BuildPlot, PlotSettings, dispConfidenceIntervals, and meanConfInterval
-function summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
+function summaryResults = processAvgsAndSDs(nPlayers, nIters, playerNames, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
     % Calculate means and standard deviations
     [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
     [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
@@ -61,7 +63,6 @@ function summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, sco
     plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, finalAxes);
     
     % Print Summary table
-    playerNames = "Player " + [1:nPlayers];
     varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
     summaryResults.playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
         trainSDs', avgNumTrainCardsLeft', trainCardSDs', ...
@@ -150,9 +151,14 @@ end
 
 
 %% processWinRates functions: processWinRates, CalcWinRates, reportStatSignificanceWinRates
-function summaryResults = processWinRates(nIters, allSimResults, scoresCols, nPlayers, summaryResults)
-    summaryResults.winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers);
-    summaryResults.winRatesStatResultsTbl = reportStatSignificanceWinRates(nPlayers, summaryResults.winRates, nIters); 
+function summaryResults = processWinRates(nIters, playerNames, allSimResults, scoresCols, nPlayers, summaryResults)
+    winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers);
+    summaryResults.winRates = table(winRates, 'RowNames', playerNames);
+    summaryResults.winRates
+
+    % Statistical Significance Table
+    summaryResults.winRatesStatResultsTbl = reportStatSignificanceWinRates(nPlayers, winRates, nIters); 
+    summaryResults.winRatesStatResultsTbl
 end
 
 function winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
@@ -162,7 +168,7 @@ function winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
         for i = 1:nIters
             wins = wins + (max(allSimResults(i,scoresCols)) == allSimResults(i,p));
         end
-    winRates(1,p) = wins/nIters;
+    winRates(p,1) = wins/nIters;
     end
 end
 
@@ -196,7 +202,7 @@ function winRatesStatResultTbl = reportStatSignificanceWinRates(nPlayers, winRat
         end
     end
     
-    winRatesStatResultTbl = table(playerA, playerB, pairDifference, criticalRange, isStatSignificant)   
+    winRatesStatResultTbl = table(playerA, playerB, pairDifference, criticalRange, isStatSignificant);
 end
 
 
@@ -290,7 +296,7 @@ end
 
 
 %% calculateClosenessMetrics function
-function summaryResults = calculateClosenessMetrics(allSimResults, scoresCols, nIters, summaryResults)
+function summaryResults = calculateClosenessMetrics(nPlayers, playerNames, allSimResults, scoresCols, nIters, summaryResults)
     % "Close" Games are more fun than blowouts -- Calculate the closeness of
     % player's scores to one another each game. Check that:
     % A player does not consistently lose
@@ -298,21 +304,33 @@ function summaryResults = calculateClosenessMetrics(allSimResults, scoresCols, n
     % Sort results of game in order to measure "Closeness" vs. Blowouts -- may
     % only need to measure difference between winner and runner-up
     [sortedElements, ~] = sort(allSimResults(:,scoresCols),2);
-    differencesInOrderedScores = diff(sortedElements,1,2)
+    differencesInOrderedScores = diff(sortedElements,1,2);
     if nIters > 1
-        avgDiffPerRank = mean(differencesInOrderedScores,1) % average difference in score between each of the ranks
+        avgDiffPerRank = mean(differencesInOrderedScores,1); % average difference in score between each of the ranks
     else
-        avgDiffPerRank = differencesInOrderedScores
+        avgDiffPerRank = differencesInOrderedScores;
     end
+    rank = "1 vs. 2";
+    if nPlayers > 2
+        for i = 2:nPlayers - 1
+            rank = [rank; strcat(num2str(i)," vs. ",num2str(i+1))];
+        end
+    end
+    summaryResults.avgDiffPerRank = table(rank, avgDiffPerRank', 'VariableNames', {'Rank', 'Avg Difference'}); 
+    summaryResults.avgDiffPerRank
     
-    % This may be redundant with the win rates metric; we may not need to know
-    % the number of times in first vs. last place -- measure of Challenge
-    numTimesLast = sum(allSimResults(:,scoresCols) == min(allSimResults(:,scoresCols),[],2),1)
-    numTimesFirst = sum(allSimResults(:,scoresCols) == max(allSimResults(:,scoresCols),[],2),1)
+    % The number/percent of games in first vs. last place -- measure of Challenge
+    % and balance
+    numTimesLast = sum(allSimResults(:,scoresCols) == min(allSimResults(:,scoresCols),[],2),1);
+    numTimesFirst = sum(allSimResults(:,scoresCols) == max(allSimResults(:,scoresCols),[],2),1);
+    percentOfTimeLast = numTimesLast / nIters;
+    percentOfTimeFirst = numTimesFirst / nIters;
+    varNames = {'# Times 1st', '# Times Last', '% of Time 1st', '% of Time Last'};
 
-    summaryResults.avgDiffPerRank = avgDiffPerRank; 
-    summaryResults.numTimesLast = numTimesLast;
-    summaryResults.numTimesFirst = numTimesFirst;
+    summaryResults.playerRankings = table(numTimesFirst', numTimesLast', ...
+        percentOfTimeFirst', percentOfTimeLast', 'VariableNames', varNames, 'RowNames', playerNames);
+    summaryResults.playerRankings
+
 end
 
 
