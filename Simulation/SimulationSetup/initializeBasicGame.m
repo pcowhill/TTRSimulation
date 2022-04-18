@@ -19,6 +19,8 @@ function game = initializeBasicGame(args)
                 players(ix) = LongRoutePlayer(ix);
             case "Destination Ticket Player"
                 players(ix) = DestinationTicketPlayer(ix);
+            case "Deviant Player"
+                players(ix) = DeviantPlayer(ix);
             otherwise
                 error("The following player strategy is not defined" + ...
                     "in initializeBasicGame: " + string(playerStrategies{ix}));

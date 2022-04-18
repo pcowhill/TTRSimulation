@@ -15,7 +15,7 @@ classdef PlayerStub < Player
         end
 
         function keptCardIndices = chooseDestinationCards(player, board, destinationCards)
-            keptCardIndices = 1;
+            keptCardIndices = [1 2];
         end
 
         function initPlayerSpecific(player, startingHand, board, destinationsDeck, nStartingTrains)

@@ -82,7 +82,11 @@ classdef Game
                 destCardsCompleted(1,playerIx) = sum(game.rules.getTicketsCompleted(game.board, game.players(playerIx)) == true);
  
                 % get routes claimed
-                routesClaimed(1,playerIx) = sum(game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color);
+                routes = game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color;
+                routesClaimed(1,playerIx) = sum(routes);
+                avgRouteLength(1,playerIx) = mean(game.board.routeGraph.Edges.Length(routes));
+
+                longestRoute(1,playerIx) = game.rules.getLongestRoute(game.board, game.players(playerIx));
             
                 % get turns per player
                 if (playerIx < lastPlayer)
@@ -106,7 +110,7 @@ classdef Game
             % playerTurns, and routesClaimed in the game results -- all of 
             % these are arrays of size 1 * nPlayers
             results = [finalScores, trainsPlayed, trainCardsLeft, ...
-                destCardsCompleted, playerTurns, routesClaimed];
+                destCardsCompleted, playerTurns, routesClaimed, avgRouteLength, longestRoute];
  
             
         end

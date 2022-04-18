@@ -19,7 +19,11 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 
         nStartingTrains = 0
 
+        publicHand TrainCard = TrainCard.empty
+
         allPlayers
+
+        turnCount
     end
 
     methods (Access = public)
@@ -49,6 +53,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             takenActions.cardsDrawn = TrainCard.empty;
             takenActions.destinationsDrawn = false;
             turnOver = false;
+            player.turnCount = player.turnCount+1;
 
             while ~turnOver
                 possibleActions = rules.getPossibleActions(player, board, trainsDeck, destinationsDeck, takenActions);
@@ -115,6 +120,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.trainCardsHand = startingHand;
             player.nStartingTrains=nStartingTrains;
             player.allPlayers = players;
+            player.turnCount=0;
             
             player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
         end
@@ -124,12 +130,16 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         function claimRoute(player, rules, board, trainsDeck, route, color, logger)
            board.claim(route, player.color);
            indicesToDiscard = [];
+           
+           nColorCards=0;
+           nLocomotives=0;
            index = 1;
            % find the cards in the player hand to discard
            while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand) && color~=Color.multicolored
                if player.trainCardsHand(index).color == color
                    indicesToDiscard = [indicesToDiscard index];
                    trainsDeck.discard(player.trainCardsHand(index));
+                   nColorCards = nColorCards+1;
                end
                index = index+1;
            end
@@ -140,11 +150,23 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                    if player.trainCardsHand(index).color == Color.multicolored
                        indicesToDiscard = [indicesToDiscard index];
                        trainsDeck.discard(player.trainCardsHand(index));
+                       nLocomotives = nLocomotives + 1;
                    end
                    index = index+1;
                end
            end
+           publicHandIndices = [];
+           for ix=1:length(player.publicHand)
+               if player.publicHand(ix).color == color && nColorCards > 0
+                   nColorCards = nColorCards - 1;
+                   publicHandIndices = [publicHandIndices ix];
+               elseif player.publicHand(ix).color == Color.multicolored && nLocomotives > 0
+                   nLocomotives = nLocomotives - 1;
+                   publicHandIndices = [publicHandIndices ix];
+               end
+           end
 
+           player.publicHand(publicHandIndices) = [];
            assert(length(indicesToDiscard)==route.length && length(indicesToDiscard) == length(unique(indicesToDiscard)), "Player didn't discard number of cards to claim route");
            player.trainCardsHand(indicesToDiscard) = [];
            player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
@@ -153,7 +175,9 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         end
 
         function drawTrainCard(player, trainsDeck, card, logger)
-            player.trainCardsHand = [player.trainCardsHand trainsDeck.drawCard(card)];
+            drawnCard = trainsDeck.drawCard(card);
+            player.trainCardsHand = [player.trainCardsHand drawnCard];
+            player.publicHand = [player.publicHand drawnCard];
                  
             activityLogStep = "drew a " + string(card.color) + " card.";
             logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);
