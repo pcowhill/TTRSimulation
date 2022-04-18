@@ -37,12 +37,12 @@ classdef Game
             game.nTimesRouteClaimedByWinner = zeros(1,length(game.board.initialRoutes));
         end
         
-        function results = simulateGame(game, logger)
+        function results = simulateGame(game, logger, randStream)
             % Set up the game components
             game.rules.initGameState()
-            game.destinationsDeck.init();
+            game.destinationsDeck.init(randStream);
             game.board.init();
-            startingCards = game.trainsDeck.init(length(game.players)*game.rules.nStartingCards, game.rules.nFaceUpCards, game.rules.nMulticoloredAllowed);
+            startingCards = game.trainsDeck.init(length(game.players)*game.rules.nStartingCards, game.rules.nFaceUpCards, game.rules.nMulticoloredAllowed, randStream);
             for playerIx = 1:length(game.players)
                logger.writeTurnAndPlayer("Initializing player destination cards", "Player " + playerIx)
                game.players(playerIx).initPlayer(startingCards(playerIx : length(game.players) : end), game.board, game.destinationsDeck, game.rules.startingTrains, game.players, logger);
@@ -58,7 +58,7 @@ classdef Game
             while ~gameOver
                turnCount = turnCount + (playerIx==1);
                logger.writeTurnAndPlayer("Turn " + turnCount, "Player " + playerIx);
-               game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger);   
+               game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger, randStream);   
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
                playerIx = mod(playerIx, length(game.players))+1;

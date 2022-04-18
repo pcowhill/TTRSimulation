@@ -26,14 +26,12 @@ function RunSimulation(initFunc, varargin)
 
     finalGameObj=Game.empty;
 
-    r = zeros(1, nIterations);
     % Run nIterations of the game
     parfor (iter = 1:nIterations, nWorkers)
         % Give each iteration (which can be executed in parallel with
         % multiple workers) it's own random number stream.
         stream = sc.Value;
         stream.Substream = iter;
-        r(iter) = rand(stream);
 
         % Instantiate logger -- "The logger will be "globally available as a
         % singleton instance.  This is because a single instance of Logger must
@@ -47,7 +45,7 @@ function RunSimulation(initFunc, varargin)
 
         logger = log4m.getLogger(LOG_FILE_NAME);
         logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
-        results(iter,:) = gameObj.simulateGame(logger);
+        results(iter,:) = gameObj.simulateGame(logger, stream);
         fclose('all');
         if isfile(LOG_FILE_NAME)
             delete(LOG_FILE_NAME);

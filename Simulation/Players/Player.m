@@ -29,7 +29,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.color = Player.PlayerColors(playerNumber);
         end
 
-        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger)
+        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger, randStream)
             %takeTurn Carry out a single turn
             %   Carry out chosen action using the provided board and decks.
             %   Assume board and decks are Handle type classes so they
@@ -42,6 +42,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
                 logger log4m
+                randStream
             end
 
             takenActions = struct();
@@ -57,11 +58,11 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
                     if isfield(chosenActions, 'route') && chosenActions.route > 0
-                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger);
+                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger, randStream);
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
                     elseif isfield(chosenActions, 'card') && chosenActions.card > 0
                         takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
-                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger);
+                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger, randStream);
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
                         takenActions.destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck, logger);
@@ -121,7 +122,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
     end
 
     methods (Access=private, Sealed=true)
-        function claimRoute(player, rules, board, trainsDeck, route, color, logger)
+        function claimRoute(player, rules, board, trainsDeck, route, color, logger, randStream)
            board.claim(route, player.color);
            indicesToDiscard = [];
            index = 1;
@@ -129,7 +130,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand) && color~=Color.multicolored
                if player.trainCardsHand(index).color == color
                    indicesToDiscard = [indicesToDiscard index];
-                   trainsDeck.discard(player.trainCardsHand(index));
+                   trainsDeck.discard(player.trainCardsHand(index), randStream);
                end
                index = index+1;
            end
@@ -139,7 +140,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand)
                    if player.trainCardsHand(index).color == Color.multicolored
                        indicesToDiscard = [indicesToDiscard index];
-                       trainsDeck.discard(player.trainCardsHand(index));
+                       trainsDeck.discard(player.trainCardsHand(index), randStream);
                    end
                    index = index+1;
                end
@@ -152,8 +153,8 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            logger.writePlayerTurnDetails("Claim Route","Player " + activityLogStep);
         end
 
-        function drawTrainCard(player, trainsDeck, card, logger)
-            player.trainCardsHand = [player.trainCardsHand trainsDeck.drawCard(card)];
+        function drawTrainCard(player, trainsDeck, card, logger, randStream)
+            player.trainCardsHand = [player.trainCardsHand trainsDeck.drawCard(card, randStream)];
                  
             activityLogStep = "drew a " + string(card.color) + " card.";
             logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);

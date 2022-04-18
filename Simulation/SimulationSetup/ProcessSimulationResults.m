@@ -69,12 +69,8 @@ function summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, sco
         avgRoutesCount', routesSDs','RowNames', playerNames, 'VariableNames', varNames)
     summaryResults.playerStatsTbl
 
-    % if the number of iterations is greater than one, calculate the
-    % confidence intervals for player metrics -- will only calculate 
-    % confidence intervals for simulations with at least 2 games to
-    if nIters > 1
-        summaryResults.playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs);
-    end
+    % Confidence Intervals on Averages
+    summaryResults.playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs);
 end
 
 function plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, finalAxes)
@@ -111,6 +107,12 @@ function PlotSettings(inTitle, xLab, yLab, axes)
 end
 
 function playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs)
+    % if the number of iterations is greater than one, calculate the
+    % confidence intervals for player metrics -- will only calculate 
+    % confidence intervals for simulations with at least 2 games. 
+    % Otherwise it will just assign 0
+    varNames2 = {'Avg Score', 'Score LCL', 'Score UCL', 'Avg Trains Played', 'Trains LCL', 'Trains UCL', 'Avg Train Cards Left', 'Train Cards LCL', 'Train Cards UCL', 'Avg Dest Cards Completed', 'Dest Cards LCL', 'Dest Cards UCL', 'Avg Turns', 'Turns LCL', 'Turns UCL', 'Avg Routes', 'Routes LCL', 'Routes UCL'};
+    if nIters > 1
         alpha = 0.05;
         criticalVal = tinv(1-alpha/2,nIters-1);
         [scoreLCL, scoreUCL] = meanConfInterval(avgPlayerScores, scoreSDs, criticalVal, nIters, false);
@@ -128,6 +130,10 @@ function playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlay
             avgTurnCount', turnLCL', turnUCL', ...
             avgRoutesCount', routeLCL', routeUCL', ...
             'RowNames', playerNames', 'VariableNames', varNames2)
+    else
+        playerConfIntTbl = table(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 'VariableNames',varNames2);
+    end
+        
 end
 
 function [lcl, ucl] = meanConfInterval(avg, sd, criticalVal, nIters, alwaysNonnegative)
@@ -204,9 +210,8 @@ function summaryResults = processCorrelationStats(allSimResults, nPlayers, summa
     % Correlation coefficient, p-value, and 95% confidence interval
     [R, p_value, RL, RU] = corrcoef(X);
 
-    if nIters > 1
-        summaryResults.corrTbl = generateCorrelationTable(R, p_value, RL, RU, nMetrics);
-    end
+    % Correlations between Key Metrics
+    summaryResults.corrTbl = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetrics);
 end
 
 function X = buildCorrelationMatrix(allSimResults, nPlayers, nMetrics)
@@ -239,38 +244,47 @@ function dispCorrelationMatrix(X, nMetrics)
     end
 end
 
-function corrTable = generateCorrelationTable(R, p_value, RL, RU, nMetrics)    
+function corrTable = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetrics)    
     % Print results table, giving R, p-value, RL, and RU for each pair of
     % labels -- note: only need to use one half of the matrix that was 
     % returned by corrcoef matrix
-    tblRow = 1;
-    for i = 1:nMetrics-1
-        for j = i+1:nMetrics
-            finalR(tblRow,1) = R(i,j);
-            finalP(tblRow,1) = p_value(i,j);
-            finalRL(tblRow,1) = RL(i,j);
-            finalRU(tblRow,1) = RU(i,j);
-            tblRow = tblRow + 1;
-        end
-    end
-
-    rSquared = finalR.^2;
-    rLCLSquared = finalRL.^2;
-    rUCLSquared = finalRU.^2;
-    rSquaredLCL =  min(rLCLSquared, rUCLSquared);
-    rSquaredUCL =  max(rLCLSquared, rUCLSquared);
-    rSquaredRng = rSquaredUCL - rSquaredLCL;
 
     corrVarNames = {'R', 'p-value', 'R LCL', 'R UCL', 'R^2', 'R^2 LCL', 'R^2 UCL', 'R^2 Range'};
-    varComboNames = {'scores/trains', 'scores/cards left', ...
-        'scores/dests completed', 'scores/turns', 'scores/routes', ...
-        'trains/cards left', 'trains/dests completed', 'trains/turns', ...
-        'trains/routes', 'cards left/dests completed', 'cards/turns', ...
-        'cards/routes', 'dests completed/turns', ...
-        'dests completed/routes', 'turns/routes'};
 
-    corrTable = table(finalR, finalP, finalRL, finalRU, rSquared, rSquaredLCL, rSquaredUCL, rSquaredRng,  ...
-        'RowNames', varComboNames, 'VariableNames', corrVarNames) 
+    % Only report the correlations between key metrics if there were at
+    % least two iterations run
+    if nIters > 1 
+        tblRow = 1;
+        for i = 1:nMetrics-1
+            for j = i+1:nMetrics
+                finalR(tblRow,1) = R(i,j);
+                finalP(tblRow,1) = p_value(i,j);
+                finalRL(tblRow,1) = RL(i,j);
+                finalRU(tblRow,1) = RU(i,j);
+                tblRow = tblRow + 1;
+            end
+        end
+    
+        rSquared = finalR.^2;
+        rLCLSquared = finalRL.^2;
+        rUCLSquared = finalRU.^2;
+        rSquaredLCL =  min(rLCLSquared, rUCLSquared);
+        rSquaredUCL =  max(rLCLSquared, rUCLSquared);
+        rSquaredRng = rSquaredUCL - rSquaredLCL;
+    
+        varComboNames = {'scores/trains', 'scores/cards left', ...
+            'scores/dests completed', 'scores/turns', 'scores/routes', ...
+            'trains/cards left', 'trains/dests completed', 'trains/turns', ...
+            'trains/routes', 'cards left/dests completed', 'cards/turns', ...
+            'cards/routes', 'dests completed/turns', ...
+            'dests completed/routes', 'turns/routes'};
+    
+        corrTable = table(finalR, finalP, finalRL, finalRU, rSquared, rSquaredLCL, rSquaredUCL, rSquaredRng,  ...
+            'RowNames', varComboNames, 'VariableNames', corrVarNames) 
+    else
+        corrTable = table(0, 0, 0, 0, 0, 0, 0, 0, ...
+            'VariableNames', corrVarNames);
+    end
 
 end
 
@@ -309,14 +323,17 @@ function saveResultsToFile(summaryResults, nPlayers, rngSeed, nIterations, nWork
     % will store in a .MAT file)
     summaryResults.settings.nPlayers = nPlayers;
     summaryResults.settings.nIterations = nIterations;
-    summaryResults.settings.rngSeed = rngSeed;
+    summaryResults.settings.rngSeed = string(rngSeed);
     summaryResults.settings.nWorkers = nWorkers;
     
     summaryResults.settings.playerTypes ="";
     for i = 1:nPlayers
         summaryResults.settings.playerTypes(i) = class(players(i));
     end
-    summaryResults.settings.ruleSet = ruleClass;
+    if nPlayers < 4
+       summaryResults.settings.playerTypes(nPlayers+1:4) = "null";
+    end
+    summaryResults.settings.ruleSet = string(ruleClass);
 
     % Format the names of the players for the save file name
     classesStr = "";
