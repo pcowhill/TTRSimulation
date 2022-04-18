@@ -243,8 +243,8 @@ classdef VariableUtilityPlayer < Player
                                     %utility is linear based on shortest path
                                     %length reduction and destination ticket point
                                     %value
-                                    destinationUtility = max(destinationUtility,...
-                                        VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue));
+                                    destinationUtility = destinationUtility + ...
+                                        VariableUtilityPlayer.getDestinationTicketUtility(d,newd,dest.pointValue);
                                 end
                             end
                         end
@@ -254,6 +254,8 @@ classdef VariableUtilityPlayer < Player
     
                     if player.deviantWeight > 0
                         deviantUtility=0;
+                        deviantRouteLengthUtility = 0;
+                        deviantConnectionUtility = 0;
     
                         for playerIx=1:length(player.allPlayers)
                             p = player.allPlayers(playerIx);
@@ -274,8 +276,7 @@ classdef VariableUtilityPlayer < Player
                                 %add utility based on the length of the route
                                 %and if the opposing player is accumulating the cards to
                                 %be able to claim it
-                                deviantRouteLengthUtility = colorFactor*lengthUtility/(length(player.allPlayers)-1);
-                                deviantUtility = deviantUtility + deviantRouteLengthUtility;
+                                deviantRouteLengthUtility = max(deviantRouteLengthUtility, colorFactor*lengthUtility);
     
                                 %add utility if this route helps connect other
                                 %routes claimed by the opposing player,
@@ -290,13 +291,12 @@ classdef VariableUtilityPlayer < Player
                                     reduction=min(newd./d,[],2);
                                     %12 is about the average point value for a
                                     %destination ticket card
-                                    deviantConnectionUtility=colorFactor*12*(0.5*max(0,1-reduction(1))+0.5*max(0,1-reduction(2)));
-                                    deviantUtility=deviantUtility+deviantConnectionUtility;
+                                    deviantConnectionUtility=max(deviantConnectionUtility, colorFactor*12*(0.5*max(0,1-reduction(1))+0.5*max(0,1-reduction(2))));
                                 end
     
                             end
                         end
-    
+                        deviantUtility = max(deviantRouteLengthUtility, deviantConnectionUtility);
                         player.routeUtilities(ix) = player.routeUtilities(ix)+...
                                 player.deviantWeight*deviantUtility;
                     end
