@@ -78,7 +78,9 @@ classdef TreacherousPlayer < Player
                 board Board
                 destinationCards DestinationTicketCard
             end
-            keptCardIndices = 1;
+            % choose smallest point values
+            [~, sortedIndices] = sort([destinationCards.pointValue]);
+            keptCardIndices=sortedIndices([1 2]);
         end
     end
 end
