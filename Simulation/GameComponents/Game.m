@@ -112,7 +112,27 @@ classdef Game
             results = [finalScores, trainsPlayed, trainCardsLeft, ...
                 destCardsCompleted, playerTurns, routesClaimed, avgRouteLength, longestRoute];
  
-            
+            % Display figure of the board colored based on the owners of the
+            % routes at the end of the game.
+            game.returnColoredBoard();
+        end
+
+        function p = returnColoredBoard(game)
+
+            edgeOwners=game.board.routeGraph.Edges.Owner;
+            edgeColors = repmat([0 0 0], length(edgeOwners), 1);    
+            tmp=find(edgeOwners=='red');
+            edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
+            tmp=find(edgeOwners=='yellow');
+            edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='green');
+            edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
+            tmp=find(edgeOwners=='blue');
+            edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
+            tmp=find(edgeOwners=="unknown");
+            edgeColors(tmp, :)=repmat([0.5, 0.5, 0.5], length(tmp), 1);
+
+            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
         end
     end
 

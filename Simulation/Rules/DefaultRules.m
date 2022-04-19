@@ -33,6 +33,7 @@ classdef DefaultRules < Rules
                 possibleActions.drawableCards = TrainCard.empty;
                 possibleActions.canDrawDestinationCards = false;
             else
+                possibleActions.drawableCards = TrainCard.empty;
                 if trainsDeck.drawable()
                     possibleActions.drawableCards = [trainsDeck.getFaceUpCards() TrainCard(Color.unknown)];
                 end
