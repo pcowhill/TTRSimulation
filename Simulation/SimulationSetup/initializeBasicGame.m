@@ -19,6 +19,8 @@ function game = initializeBasicGame(args)
                 players(ix) = LongRoutePlayer(ix);
             case "Destination Ticket Player"
                 players(ix) = DestinationTicketPlayer(ix);
+            case "Deviant Player"
+                players(ix) = DeviantPlayer(ix);
             case "Treacherous Player"
                 players(ix) = TreacherousPlayer(ix);
             otherwise
@@ -37,7 +39,7 @@ function game = initializeBasicGame(args)
                  "initializeBasicGame: " + string(ruleset));
     end
 
-    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK, finalAxes.Board);
+    game = Game(BOARD, players, rules, TRAINS_DECK, DESTINATIONS_DECK);
 
 end
 

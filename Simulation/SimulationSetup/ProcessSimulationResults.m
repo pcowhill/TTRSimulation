@@ -10,15 +10,17 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes)
     numDestCardCols = 3*nPlayers+1:4*nPlayers;
     turnsCols = 4*nPlayers+1:5*nPlayers;
     routesCols = 5*nPlayers+1:6*nPlayers;
+    avgRouteLengthCols=6*nPlayers+1:7*nPlayers;
+    longestRouteCols=7*nPlayers+1:8*nPlayers;
 
     % Process, plot, and print statistics related to Averages and Standard
     % Deviations
-    processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
+    processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes)
 
     % Insert metrics about the statistical significance of the win
     % rates
     % Chi-Square Significance Test
-    winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers);
+    winRates = CalcWinRates(nIters, allSimResults, scoresCols, nPlayers)
     reportStatSignificanceWinRates(nPlayers, winRates, nIters);
 end
 
@@ -88,7 +90,7 @@ function reportStatSignificanceWinRates(nPlayers, winRates,nIters)
             % pair is greater than r (the critical range) for that pair,
             % then it is statistically significant
             % Source: https://www.itl.nist.gov/div898/handbook/prc/section4/prc464.htm
-            criticalRange(pair,1) = sqrt(criticalVal)*sqrt((winRates(i)*(1 - winRates(j)) + winRates(j)*(1 - winRates(j))) / nIters);
+            criticalRange(pair,1) = sqrt(criticalVal)*sqrt((winRates(i)*(1 - winRates(i)) + winRates(j)*(1 - winRates(j))) / nIters);
             if pairDifference(pair,1) <= criticalRange(pair,1)
                 isStatSignificant(pair,1) = "No";
             else
@@ -100,7 +102,7 @@ function reportStatSignificanceWinRates(nPlayers, winRates,nIters)
     winRatesStatResultTbl = table(playerA, playerB, pairDifference, criticalRange, isStatSignificant)   
 end
 
-function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
+function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes)
     % Calculate means and standard deviations
     [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
     [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
@@ -108,6 +110,8 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
     [avgNumDestCardsCompleted, destCardsSDs] = CalculatePlayerMeansSDs(allSimResults, numDestCardCols, nIters);
     [avgTurnCount, turnSDs] = CalculatePlayerMeansSDs(allSimResults, turnsCols, nIters);
     [avgRoutesCount, routesSDs] = CalculatePlayerMeansSDs(allSimResults, routesCols, nIters);
+    [avgAvgRouteLength, avgRouteLengthSDs] = CalculatePlayerMeansSDs(allSimResults, avgRouteLengthCols, nIters);
+    [avgLongestRoute, longestRouteSDs] = CalculatePlayerMeansSDs(allSimResults, longestRouteCols, nIters);
         
     % We could replace these with the specific type of Player by taking the
     % class of each player in the players array. 
@@ -131,11 +135,17 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
  
     BuildPlot(nPlayers, avgRoutesCount, routesSDs, finalAxes.RoutesClaimed);
     PlotSettings("Players' Routes Claimed", "Players", "Routes", finalAxes.RoutesClaimed);
+
+    BuildPlot(nPlayers, avgAvgRouteLength, avgRouteLengthSDs, finalAxes.AvgRouteLength);
+    PlotSettings("Players' Average Route Length", "Players", "Length", finalAxes.AvgRouteLength);
+
+    BuildPlot(nPlayers, avgLongestRoute, longestRouteSDs, finalAxes.LongestRoute);
+    PlotSettings("Players' Longest Route", "Players", "Length", finalAxes.LongestRoute);
    
     % Print Summary table
-    varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
+    varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes', 'Avg Route Length', 'Avg Route Length SD', 'Avg Longest Route', 'Longest Route SD'};
     playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
         trainSDs', avgNumTrainCardsLeft', trainCardSDs', ...
         avgNumDestCardsCompleted', destCardsSDs', avgTurnCount', turnSDs',...
-        avgRoutesCount', routesSDs','RowNames', playerNames, 'VariableNames', varNames)
+        avgRoutesCount', routesSDs',avgAvgRouteLength', avgRouteLengthSDs', avgLongestRoute', longestRouteSDs', 'RowNames', playerNames, 'VariableNames', varNames)
 end

@@ -13,12 +13,10 @@ classdef Game
         trainsDeck TrainsDeck
 
         destinationsDeck DestinationsDeck
-
-        axesForFinalBoard
     end
     
     methods
-        function game = Game(board, players, rules, trainsDeck, destinationsDeck, axesForFinalBoard)
+        function game = Game(board, players, rules, trainsDeck, destinationsDeck)
             %GAME Initialize properties
             arguments
                 board Board
@@ -26,14 +24,12 @@ classdef Game
                 rules Rules
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
-                axesForFinalBoard
             end
             game.board = board;
             game.players = players;
             game.rules = rules;
             game.trainsDeck = trainsDeck;
             game.destinationsDeck = destinationsDeck;
-            game.axesForFinalBoard = axesForFinalBoard;
         end
         
         function results = simulateGame(game, logger)
@@ -52,7 +48,7 @@ classdef Game
             turnCount = 0;
             % Play game until rules say it's over
             while ~gameOver
-               turnCount = turnCount + (playerIx==1)
+               turnCount = turnCount + (playerIx==1);
                logger.writeTurnAndPlayer("Turn " + turnCount, "Player " + playerIx);
                game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger);   
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
@@ -67,10 +63,10 @@ classdef Game
 
             % Game results, metrics, and visualization - This will be stuff that can be collected at
             % the end of a game
-            results = processGameResults(game, playerIx, turnCount, finalScores);
+            results = processGameResults(game, playerIx, turnCount, finalScores, logger);
         end
 
-        function results = processGameResults(game, playerIx, turnCount, finalScores)
+        function results = processGameResults(game, playerIx, turnCount, finalScores, logger)
 
             % Calculate Player Specific Metrics
             lastPlayer = playerIx; 
@@ -86,7 +82,11 @@ classdef Game
                 destCardsCompleted(1,playerIx) = sum(game.rules.getTicketsCompleted(game.board, game.players(playerIx)) == true);
  
                 % get routes claimed
-                routesClaimed(1,playerIx) = sum(game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color);
+                routes = game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color;
+                routesClaimed(1,playerIx) = sum(routes);
+                avgRouteLength(1,playerIx) = mean(game.board.routeGraph.Edges.Length(routes));
+
+                longestRoute(1,playerIx) = game.rules.getLongestRoute(game.board, game.players(playerIx));
             
                 % get turns per player
                 if (playerIx < lastPlayer)
@@ -103,14 +103,14 @@ classdef Game
             end
 
              % Print player activity log
-             activityLog = game.returnActivityLog();
+             activityLog = game.returnActivityLog(logger);
              activityLog
  
             % return finalScores, trainsPlayed, trainCardsLeft, destCardsCompleted,
             % playerTurns, and routesClaimed in the game results -- all of 
             % these are arrays of size 1 * nPlayers
             results = [finalScores, trainsPlayed, trainCardsLeft, ...
-                destCardsCompleted, playerTurns, routesClaimed];
+                destCardsCompleted, playerTurns, routesClaimed, avgRouteLength, longestRoute];
  
             % Display figure of the board colored based on the owners of the
             % routes at the end of the game.
@@ -137,10 +137,10 @@ classdef Game
     end
 
     methods(Static)
-        function f = returnActivityLog()
+        function f = returnActivityLog(logger)
             % This function returns the file contents that were written in
             % the activity log file during the game.
-            f = fileread("logfile.txt");
+            f = fileread(logger.fullpath);     
         end
     end
 end
