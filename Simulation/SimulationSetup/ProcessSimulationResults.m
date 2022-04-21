@@ -18,7 +18,7 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResult
 
     % Process, plot, and print statistics related to Averages and Standard
     % Deviations
-    summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes);
+    summaryResults = processAvgsAndSDs(nPlayers, playerNames, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes, summaryResults);
 
     % Insert metrics about the statistical significance of the win
     % rates -- Chi-Square Significance Test
@@ -52,7 +52,7 @@ end
 
 
 %% processAvgsAndSDs Functions: processAvgsAndSDs, plotPlayerStats, BuildPlot, PlotSettings, dispConfidenceIntervals, and meanConfInterval
-function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes)
+function summaryResults = processAvgsAndSDs(nPlayers, playerNames, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes, summaryResults)
     % Calculate means and standard deviations
     [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
     [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
@@ -64,21 +64,23 @@ function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrain
     [avgLongestRoute, longestRouteSDs] = CalculatePlayerMeansSDs(allSimResults, longestRouteCols, nIters);
 
     % Plots Stats by Player
-    plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, finalAxes);
+    plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, avgAvgRouteLength, avgRouteLengthSDs, avgLongestRoute, longestRouteSDs, finalAxes);
 
     % Print Summary table
     varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes', 'Avg Route Length', 'Avg Route Length SD', 'Avg Longest Route', 'Longest Route SD'};
-    playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
+    summaryResults.playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
         trainSDs', avgNumTrainCardsLeft', trainCardSDs', ...
         avgNumDestCardsCompleted', destCardsSDs', avgTurnCount', turnSDs',...
-        avgRoutesCount', routesSDs',avgAvgRouteLength', avgRouteLengthSDs', avgLongestRoute', longestRouteSDs', 'RowNames', playerNames, 'VariableNames', varNames)
+        avgRoutesCount', routesSDs',avgAvgRouteLength', avgRouteLengthSDs', avgLongestRoute', longestRouteSDs', 'RowNames', playerNames, 'VariableNames', varNames);
     summaryResults.playerStatsTbl
 
-    % Confidence Intervals on Averages
+    % if the number of iterations is greater than one, calculate the
+    % confidence intervals for player metrics -- will only calculate 
+    % confidence intervals for simulations with at least 2 games
     summaryResults.playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs);
 end
 
-function plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, finalAxes)
+function plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, avgAvgRouteLength, avgRouteLengthSDs, avgLongestRoute, longestRouteSDs, finalAxes)
     BuildPlot(nPlayers, avgPlayerScores, scoreSDs, finalAxes.FinalScores);
     PlotSettings("Player Final Scores", "Players", "Final Score", finalAxes.FinalScores);
 
@@ -253,7 +255,7 @@ function X = buildCorrelationMatrix(allSimResults, nPlayers, nMetrics)
 end
 
 function dispCorrelationMatrix(X, nMetrics)
-    labels = ["Final Scores", "Trains Played", "Cards Left", "Dests Completed", "Turns Taken", "Routes"];
+    labels = ["Final Scores", "Trains Played", "Cards Left", "Dests Completed", "Turns Taken", "Routes", "Avg Route Length", "Longest Route"];
     [~, axis] = plotmatrix(X,X);
     for i = 1:nMetrics
         ylabel(axis(i,1),labels(i), 'Rotation', 0, 'HorizontalAlignment', 'right');
@@ -290,11 +292,12 @@ function corrTable = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetri
         rSquaredRng = rSquaredUCL - rSquaredLCL;
 
         varComboNames = {'scores/trains', 'scores/cards left', ...
-            'scores/dests completed', 'scores/turns', 'scores/routes', ...
-            'trains/cards left', 'trains/dests completed', 'trains/turns', ...
-            'trains/routes', 'cards left/dests completed', 'cards/turns', ...
-            'cards/routes', 'dests completed/turns', ...
-            'dests completed/routes', 'turns/routes'};
+            'scores/dests completed', 'scores/turns', 'scores/routes', 'scores/avg length', ...
+            'scores/longest route','trains/cards left', 'trains/dests completed', 'trains/turns', ...
+            'trains/routes', 'trains/avg length','trains/longest route','cards/dests completed', 'cards/turns', ...
+            'cards/routes', 'cards/avg length','cards/longest route','dests completed/turns', ...
+            'dests completed/routes', 'dests completed/avg length','dests completed/longest route', ...
+            'turns/routes', 'turns/avg length', 'turns/longest route', 'routes/avg length', 'routes/longest route', 'avg length/longest route'};
 
         corrTable = table(finalR, finalP, finalRL, finalRU, rSquared, rSquaredLCL, rSquaredUCL, rSquaredRng,  ...
             'RowNames', varComboNames, 'VariableNames', corrVarNames)

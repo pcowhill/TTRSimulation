@@ -14,8 +14,6 @@ classdef Game
 
         destinationsDeck DestinationsDeck
 
-        axesForFinalBoard
-
         nTimesRouteClaimedByWinner
     end
 
@@ -108,13 +106,15 @@ classdef Game
                 % number of destination ticket cards completed
                 destCardsCompleted(1,playerIx) = sum(game.rules.getTicketsCompleted(game.board, game.players(playerIx)) == true);
 
-                % get routes claimed
-                routesClaimed(1,playerIx) = sum(game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color);
-                routesClaimed(1,playerIx) = sum(routes);
-                avgRouteLength(1,playerIx) = mean(game.board.routeGraph.Edges.Length(routes));
+                % get routes claimed, average route length, and longest
+                % route
+                ownsRoute = (game.board.routeGraph.Edges(:,4).Owner == game.players(playerIx).color);
+                routesClaimed(1,playerIx) = sum(ownsRoute);
 
+                idxOfRoutesOwned = find(ownsRoute == 1);
+                avgRouteLength(1,playerIx) = mean(game.board.routeGraph.Edges.Length(idxOfRoutesOwned));
                 longestRoute(1,playerIx) = game.rules.getLongestRoute(game.board, game.players(playerIx));
-
+ 
                 % get turns per player
                 if (playerIx < lastPlayer)
                     playerTurns(playerIx) = turnCount;
@@ -155,25 +155,8 @@ classdef Game
 
             % Keep track of top winning routes -- how powerful is a given
             % action or combination of actions?
-            winningRoutesTbl = [{game.board.routeGraph.Edges.EndNodes}, {num2cell(game.nTimesRouteClaimedByWinner')}]
+            winningRoutesTbl = [{game.board.routeGraph.Edges.EndNodes}, {num2cell(game.nTimesRouteClaimedByWinner')}];
             [winningRoutesTbl{1}, winningRoutesTbl{2}]
-        end
-
-        function p = returnColoredBoard(game)
-        % This function is used explicitly by the code. This would be for
-        % allowing the app to call and get the colored board.
-            edgeOwners=game.board.routeGraph.Edges.Owner;
-            edgeColors = repmat([0 0 0], length(edgeOwners), 1);
-            tmp=find(edgeOwners=='red');
-            edgeColors(tmp, :)=repmat([1 0 0], length(tmp),1);
-            tmp=find(edgeOwners=='yellow');
-            edgeColors(tmp, :)=repmat([1 1 0], length(tmp),1);
-            tmp=find(edgeOwners=='green');
-            edgeColors(tmp, :)=repmat([0 1 0], length(tmp),1);
-            tmp=find(edgeOwners=='blue');
-            edgeColors(tmp, :)=repmat([0 0 1], length(tmp),1);
-
-            p = plot(game.board.routeGraph, 'EdgeColor', edgeColors, 'Parent', game.axesForFinalBoard);
         end
 
     end
