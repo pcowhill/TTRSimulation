@@ -5,7 +5,7 @@ function RunSimulation(initFunc, varargin)
     nIterations = varargin{2};
     rngSeed = varargin{5};
     finalAxes = varargin{6};
-    nMetrics = 6;
+    nMetrics = 8;
     nWorkers = varargin{7};
     saveResults = varargin{8};
 

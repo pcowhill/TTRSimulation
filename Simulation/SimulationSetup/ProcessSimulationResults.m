@@ -1,7 +1,7 @@
 function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResults, nIterations, rngSeed, nWorkers, players, ruleClass)
     summaryResults.allSimResults = allSimResults;
-    nIters = size(allSimResults,1);    
-    
+    nIters = size(allSimResults,1);
+
     % Calculate Average Scores, Number of Trains Played, Number of Train
     % Cards Left, Number of Destination Cards Completed, Number of Turns
     % per Player, and Number of Routes Claimed
@@ -11,20 +11,22 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResult
     numDestCardCols = 3*nPlayers+1:4*nPlayers;
     turnsCols = 4*nPlayers+1:5*nPlayers;
     routesCols = 5*nPlayers+1:6*nPlayers;
-    
+    avgRouteLengthCols=6*nPlayers+1:7*nPlayers;
+    longestRouteCols=7*nPlayers+1:8*nPlayers;
+
     playerNames = "Player " + [1:nPlayers];
 
     % Process, plot, and print statistics related to Averages and Standard
     % Deviations
-    summaryResults = processAvgsAndSDs(nPlayers, nIters, playerNames, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes);
+    summaryResults = processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols,numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes);
 
     % Insert metrics about the statistical significance of the win
     % rates -- Chi-Square Significance Test
     summaryResults = processWinRates(nIters, playerNames, allSimResults, scoresCols, nPlayers, summaryResults);
-    
+
     % Print information about correlations between key statistics
-    summaryResults = processCorrelationStats(allSimResults, nPlayers, summaryResults, nIters); 
-   
+    summaryResults = processCorrelationStats(allSimResults, nPlayers, summaryResults, nIters);
+
     % Present a few other simple "closeness" measures
     summaryResults = calculateClosenessMetrics(nPlayers, playerNames, allSimResults, scoresCols, nIters, summaryResults);
 
@@ -45,12 +47,12 @@ function [avgMeans, stdDevs] = CalculatePlayerMeansSDs(allSimResults, columns, n
     else % Just copy the actual values for the mean, and sd = 0
         avgMeans = allSimResults(:,columns);
         stdDevs = zeros(1,length(columns));
-    end        
+    end
 end
 
 
 %% processAvgsAndSDs Functions: processAvgsAndSDs, plotPlayerStats, BuildPlot, PlotSettings, dispConfidenceIntervals, and meanConfInterval
-function summaryResults = processAvgsAndSDs(nPlayers, nIters, playerNames, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, finalAxes)
+function processAvgsAndSDs(nPlayers, nIters, allSimResults, scoresCols, numTrainsCols, numTrainCardCols, numDestCardCols, turnsCols, routesCols, avgRouteLengthCols, longestRouteCols, finalAxes)
     % Calculate means and standard deviations
     [avgPlayerScores, scoreSDs] = CalculatePlayerMeansSDs(allSimResults,scoresCols, nIters);
     [avgNumTrainsPlayed, trainSDs] = CalculatePlayerMeansSDs(allSimResults, numTrainsCols, nIters);
@@ -58,16 +60,18 @@ function summaryResults = processAvgsAndSDs(nPlayers, nIters, playerNames, allSi
     [avgNumDestCardsCompleted, destCardsSDs] = CalculatePlayerMeansSDs(allSimResults, numDestCardCols, nIters);
     [avgTurnCount, turnSDs] = CalculatePlayerMeansSDs(allSimResults, turnsCols, nIters);
     [avgRoutesCount, routesSDs] = CalculatePlayerMeansSDs(allSimResults, routesCols, nIters);
-        
+    [avgAvgRouteLength, avgRouteLengthSDs] = CalculatePlayerMeansSDs(allSimResults, avgRouteLengthCols, nIters);
+    [avgLongestRoute, longestRouteSDs] = CalculatePlayerMeansSDs(allSimResults, longestRouteCols, nIters);
+
     % Plots Stats by Player
     plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs, finalAxes);
-    
+
     % Print Summary table
-    varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes'};
-    summaryResults.playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
+    varNames = {'Avg Score', 'SD Score', 'Avg Trains Played', 'SD Trains Played', 'Avg Train Cards Left', 'SD Train Cards Left', 'Avg Dest Cards Completed', 'SD Dest Cards Completed', 'Avg Turns', 'SD Turns', 'Avg Routes', 'SD Routes', 'Avg Route Length', 'Avg Route Length SD', 'Avg Longest Route', 'Longest Route SD'};
+    playerStatsTbl = table(avgPlayerScores', scoreSDs',avgNumTrainsPlayed', ...
         trainSDs', avgNumTrainCardsLeft', trainCardSDs', ...
         avgNumDestCardsCompleted', destCardsSDs', avgTurnCount', turnSDs',...
-        avgRoutesCount', routesSDs','RowNames', playerNames, 'VariableNames', varNames)
+        avgRoutesCount', routesSDs',avgAvgRouteLength', avgRouteLengthSDs', avgLongestRoute', longestRouteSDs', 'RowNames', playerNames, 'VariableNames', varNames)
     summaryResults.playerStatsTbl
 
     % Confidence Intervals on Averages
@@ -86,12 +90,19 @@ function plotPlayerStats(nPlayers, avgPlayerScores, scoreSDs, avgNumTrainsPlayed
 
     BuildPlot(nPlayers, avgNumDestCardsCompleted, destCardsSDs, finalAxes.DestinationCardsComplete);
     PlotSettings("Player Destination Cards Completed", "Players", "Cards Completed", finalAxes.DestinationCardsComplete);
-    
+
     BuildPlot(nPlayers, avgTurnCount, turnSDs, finalAxes.Turns);
     PlotSettings("Players' Turns", "Players", "Turns Taken", finalAxes.Turns);
- 
+
     BuildPlot(nPlayers, avgRoutesCount, routesSDs, finalAxes.RoutesClaimed);
     PlotSettings("Players' Routes Claimed", "Players", "Routes", finalAxes.RoutesClaimed);
+
+    BuildPlot(nPlayers, avgAvgRouteLength, avgRouteLengthSDs, finalAxes.AvgRouteLength);
+    PlotSettings("Players' Average Route Length", "Players", "Length", finalAxes.AvgRouteLength);
+
+    BuildPlot(nPlayers, avgLongestRoute, longestRouteSDs, finalAxes.LongestRoute);
+    PlotSettings("Players' Longest Route", "Players", "Length", finalAxes.LongestRoute);
+
 end
 
 function BuildPlot(nPlayers, avg, sd, axes)
@@ -109,8 +120,8 @@ end
 
 function playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlayerScores, scoreSDs, avgNumTrainsPlayed, trainSDs, avgNumTrainCardsLeft, trainCardSDs, avgNumDestCardsCompleted, destCardsSDs, avgTurnCount, turnSDs, avgRoutesCount, routesSDs)
     % if the number of iterations is greater than one, calculate the
-    % confidence intervals for player metrics -- will only calculate 
-    % confidence intervals for simulations with at least 2 games. 
+    % confidence intervals for player metrics -- will only calculate
+    % confidence intervals for simulations with at least 2 games.
     % Otherwise it will just assign 0
     varNames2 = {'Avg Score', 'Score LCL', 'Score UCL', 'Avg Trains Played', 'Trains LCL', 'Trains UCL', 'Avg Train Cards Left', 'Train Cards LCL', 'Train Cards UCL', 'Avg Dest Cards Completed', 'Dest Cards LCL', 'Dest Cards UCL', 'Avg Turns', 'Turns LCL', 'Turns UCL', 'Avg Routes', 'Routes LCL', 'Routes UCL'};
     if nIters > 1
@@ -122,7 +133,7 @@ function playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlay
         [destCardsLCL, destCardsUCL] = meanConfInterval(avgNumDestCardsCompleted, destCardsSDs, criticalVal, nIters, true);
         [turnLCL, turnUCL] = meanConfInterval(avgTurnCount, turnSDs, criticalVal, nIters, true);
         [routeLCL, routeUCL] = meanConfInterval(avgRoutesCount, routesSDs, criticalVal, nIters, true);
-    
+
         varNames2 = {'Avg Score', 'Score LCL', 'Score UCL', 'Avg Trains Played', 'Trains LCL', 'Trains UCL', 'Avg Train Cards Left', 'Train Cards LCL', 'Train Cards UCL', 'Avg Dest Cards Completed', 'Dest Cards LCL', 'Dest Cards UCL', 'Avg Turns', 'Turns LCL', 'Turns UCL', 'Avg Routes', 'Routes LCL', 'Routes UCL'};
        playerConfIntTbl = table(avgPlayerScores', scoreLCL', scoreUCL', ...
             avgNumTrainsPlayed', trainsLCL', trainsUCL', ...
@@ -134,7 +145,7 @@ function playerConfIntTbl = dispConfidenceIntervals(nIters, playerNames, avgPlay
     else
         playerConfIntTbl = table(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, 'VariableNames',varNames2);
     end
-        
+
 end
 
 function [lcl, ucl] = meanConfInterval(avg, sd, criticalVal, nIters, alwaysNonnegative)
@@ -142,7 +153,7 @@ function [lcl, ucl] = meanConfInterval(avg, sd, criticalVal, nIters, alwaysNonne
         lcl = avg - criticalVal * stdError;
         ucl = avg + criticalVal * stdError;
 
-        if (alwaysNonnegative == true)            
+        if (alwaysNonnegative == true)
             % For quantities that are always nonnegative, if the LCL
             % calculated is negative, set the LCL to 0
             lcl(lcl < 0) = 0;
@@ -157,7 +168,7 @@ function summaryResults = processWinRates(nIters, playerNames, allSimResults, sc
     summaryResults.winRates
 
     % Statistical Significance Table
-    summaryResults.winRatesStatResultsTbl = reportStatSignificanceWinRates(nPlayers, winRates, nIters); 
+    summaryResults.winRatesStatResultsTbl = reportStatSignificanceWinRates(nPlayers, winRates, nIters);
     summaryResults.winRatesStatResultsTbl
 end
 
@@ -193,7 +204,7 @@ function winRatesStatResultTbl = reportStatSignificanceWinRates(nPlayers, winRat
             % pair is greater than r (the critical range) for that pair,
             % then it is statistically significant
             % Source: https://www.itl.nist.gov/div898/handbook/prc/section4/prc464.htm
-            criticalRange(pair,1) = sqrt(criticalVal)*sqrt((winRates(i)*(1 - winRates(j)) + winRates(j)*(1 - winRates(j))) / nIters);
+            criticalRange(pair,1) = sqrt(criticalVal)*sqrt((winRates(i)*(1 - winRates(i)) + winRates(j)*(1 - winRates(j))) / nIters);
             if pairDifference(pair,1) <= criticalRange(pair,1)
                 isStatSignificant(pair,1) = "No";
             else
@@ -201,7 +212,7 @@ function winRatesStatResultTbl = reportStatSignificanceWinRates(nPlayers, winRat
             end
         end
     end
-    
+
     winRatesStatResultTbl = table(playerA, playerB, pairDifference, criticalRange, isStatSignificant);
 end
 
@@ -223,10 +234,10 @@ end
 function X = buildCorrelationMatrix(allSimResults, nPlayers, nMetrics)
     %https://www.mathworks.com/matlabcentral/answers/363444-how-can-i-add-xlabel-and-ylabel-to-the-individual-subplots-of-plotmatrix
     % Append the results of each player into a single column for each
-    % metric, this is needed in order to represent the nMetrics 
+    % metric, this is needed in order to represent the nMetrics
     % on a nMetrics x nMetrics scatterplot matrix
     % Metrics will be the columns
-    
+
     % Correlation between key metrics may be used to gauge balance measures
     % -- how powerful is a given set of actions. We can see this by
     % comparing the correlation of final scores with various metrics such
@@ -250,16 +261,16 @@ function dispCorrelationMatrix(X, nMetrics)
     end
 end
 
-function corrTable = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetrics)    
+function corrTable = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetrics)
     % Print results table, giving R, p-value, RL, and RU for each pair of
-    % labels -- note: only need to use one half of the matrix that was 
+    % labels -- note: only need to use one half of the matrix that was
     % returned by corrcoef matrix
 
     corrVarNames = {'R', 'p-value', 'R LCL', 'R UCL', 'R^2', 'R^2 LCL', 'R^2 UCL', 'R^2 Range'};
 
     % Only report the correlations between key metrics if there were at
     % least two iterations run
-    if nIters > 1 
+    if nIters > 1
         tblRow = 1;
         for i = 1:nMetrics-1
             for j = i+1:nMetrics
@@ -270,23 +281,23 @@ function corrTable = generateCorrelationTable(nIters, R, p_value, RL, RU, nMetri
                 tblRow = tblRow + 1;
             end
         end
-    
+
         rSquared = finalR.^2;
         rLCLSquared = finalRL.^2;
         rUCLSquared = finalRU.^2;
         rSquaredLCL =  min(rLCLSquared, rUCLSquared);
         rSquaredUCL =  max(rLCLSquared, rUCLSquared);
         rSquaredRng = rSquaredUCL - rSquaredLCL;
-    
+
         varComboNames = {'scores/trains', 'scores/cards left', ...
             'scores/dests completed', 'scores/turns', 'scores/routes', ...
             'trains/cards left', 'trains/dests completed', 'trains/turns', ...
             'trains/routes', 'cards left/dests completed', 'cards/turns', ...
             'cards/routes', 'dests completed/turns', ...
             'dests completed/routes', 'turns/routes'};
-    
+
         corrTable = table(finalR, finalP, finalRL, finalRU, rSquared, rSquaredLCL, rSquaredUCL, rSquaredRng,  ...
-            'RowNames', varComboNames, 'VariableNames', corrVarNames) 
+            'RowNames', varComboNames, 'VariableNames', corrVarNames)
     else
         corrTable = table(0, 0, 0, 0, 0, 0, 0, 0, ...
             'VariableNames', corrVarNames);
@@ -300,7 +311,7 @@ function summaryResults = calculateClosenessMetrics(nPlayers, playerNames, allSi
     % "Close" Games are more fun than blowouts -- Calculate the closeness of
     % player's scores to one another each game. Check that:
     % A player does not consistently lose
-    
+
     % Sort results of game in order to measure "Closeness" vs. Blowouts -- may
     % only need to measure difference between winner and runner-up
     [sortedElements, ~] = sort(allSimResults(:,scoresCols),2);
@@ -316,9 +327,9 @@ function summaryResults = calculateClosenessMetrics(nPlayers, playerNames, allSi
             rank = [rank; strcat(num2str(i)," vs. ",num2str(i+1))];
         end
     end
-    summaryResults.avgDiffPerRank = table(rank, avgDiffPerRank', 'VariableNames', {'Rank', 'Avg Difference'}); 
+    summaryResults.avgDiffPerRank = table(rank, avgDiffPerRank', 'VariableNames', {'Rank', 'Avg Difference'});
     summaryResults.avgDiffPerRank
-    
+
     % The number/percent of games in first vs. last place -- measure of Challenge
     % and balance
     numTimesLast = sum(allSimResults(:,scoresCols) == min(allSimResults(:,scoresCols),[],2),1);
@@ -336,14 +347,14 @@ end
 
 %% saveResultsToFile function
 function saveResultsToFile(summaryResults, nPlayers, rngSeed, nIterations, nWorkers, players, ruleClass)
-    
-    % Save the parameter settings to the summaryResults struct (which we 
+
+    % Save the parameter settings to the summaryResults struct (which we
     % will store in a .MAT file)
     summaryResults.settings.nPlayers = nPlayers;
     summaryResults.settings.nIterations = nIterations;
     summaryResults.settings.rngSeed = string(rngSeed);
     summaryResults.settings.nWorkers = nWorkers;
-    
+
     summaryResults.settings.playerTypes ="";
     for i = 1:nPlayers
         summaryResults.settings.playerTypes(i) = class(players(i));
@@ -360,10 +371,11 @@ function saveResultsToFile(summaryResults, nPlayers, rngSeed, nIterations, nWork
         classesStr = strcat(classesStr, playerClass(1:end-6)); % Take "Player" out for conciseness
     end
 
-    % Name the save file with the convention: time, seed, iterations, 
+    % Name the save file with the convention: time, seed, iterations,
     % player classes, number of workers, and rule class
     fileName = strcat(num2str(now), rngSeed, num2str(nIterations), classesStr, num2str(nWorkers), ruleClass,'.mat');
 
     save(fileName, '-struct', 'summaryResults');
     disp("The summary results struct of the simulation were saved to the file '" + fileName + "'.");
+
 end
