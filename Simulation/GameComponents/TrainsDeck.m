@@ -86,7 +86,7 @@ classdef TrainsDeck < handle
 
         %% Functions that may be called from other classes
         % Some are used internally by the TrainsDeck class as well
-        function startingHands = init(obj, nStartCards, inputNFaceUpCards, inputNMulticoloredCardsAllowed)         
+        function startingHands = init(obj, nStartCards, inputNFaceUpCards, inputNMulticoloredCardsAllowed, randStream)         
             % init 
             % Initialize/reset TrainsDeck based on rules.
             % Shuffle deck for a new game, return the given number of
@@ -97,8 +97,9 @@ classdef TrainsDeck < handle
                 nStartCards {mustBeInteger}
                 inputNFaceUpCards {mustBeInteger}
                 inputNMulticoloredCardsAllowed {mustBeInteger}
+                randStream
             end
-
+            
             % Initialize/Reset the drawPile, discardPile, and faceUpCards
             obj.drawPile = obj.allCards; 
             obj.discardPile = TrainCard.empty;
@@ -113,7 +114,7 @@ classdef TrainsDeck < handle
             % one pile (e.g., in case a game has already been played, and
             % we don't want to create a new TrainsDeck object); we just want to put 
             % all the cards in one deck.
-            shuffle(obj);
+            shuffle(obj, randStream);
             startingHands = obj.drawPile(1:nStartCards);
             obj.drawPile(1:nStartCards) = [];        
 
@@ -131,8 +132,8 @@ classdef TrainsDeck < handle
             % down on the checking of every single card.
                 obj.faceUpCards(1:obj.maxMulticoloredFaceUpAllowed) = obj.drawPile(1:obj.maxMulticoloredFaceUpAllowed);
                 obj.drawPile(1:obj.maxMulticoloredFaceUpAllowed) = [];
-                obj.checkDrawPile(1);
-                addAndCheckFaceUpCards(obj);
+                obj.checkDrawPile(1, randStream);
+                addAndCheckFaceUpCards(obj, randStream);
             else
             % else leave all cards in the drawPile -- we don't have enough
             % to have face-up cards.
@@ -140,13 +141,14 @@ classdef TrainsDeck < handle
             end
         end
 
-        function drawnCard = drawCard(obj, desiredCard)
+        function drawnCard = drawCard(obj, desiredCard, randStream)
             % drawCard 
             % Draw given face up card
             % If the card color is unknown, draw from the deck.
             arguments
                 obj TrainsDeck
                 desiredCard TrainCard
+                randStream
             end
 
             drawnCard = TrainCard.empty;
@@ -162,7 +164,7 @@ classdef TrainsDeck < handle
             end
 
             if ~obj.drawable()
-                checkDrawPile(obj, 1);
+                checkDrawPile(obj, 1, randStream);
             else
                 % If the index is <= the number of face-up cards, draw the 
                 % indexed face-up card
@@ -179,18 +181,18 @@ classdef TrainsDeck < handle
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. Then, make sure to check for valid face up
                     % cards (< maxMulticoloredFaceUpAllowed).
-                    checkDrawPile(obj, 1);
-                    obj.addAndCheckFaceUpCards();
+                    checkDrawPile(obj, 1, randStream);
+                    obj.addAndCheckFaceUpCards(randStream);
                 elseif(cardIndex < 0 && obj.drawable())
                     % Draw the top card from the drawPile - the player 
                     % wishes to draw a card from the draw pile
-                    checkDrawPile(obj, 1);
+                    checkDrawPile(obj, 1, randStream);
                     drawnCard = obj.drawPile(1); 
                     obj.drawPile(1) = [];
     
                     % If the drawPile is drawable and empty, make sure 
                     % it gets shuffled. 
-                    checkDrawPile(obj, 1);
+                    checkDrawPile(obj, 1, randStream);
                 else
                     error("Index given for drawing a card from the draw " + ...
                         "pile or face-up cards was out of range.")
@@ -198,15 +200,16 @@ classdef TrainsDeck < handle
             end
         end
 
-        function card = dealCard(obj)
-            card = obj.drawCard(TrainCard(Color.unknown));
+        function card = dealCard(obj, randStream)
+            card = obj.drawCard(TrainCard(Color.unknown), randStream);
         end
 
-        function discard(obj, card)
+        function discard(obj, card, randStream)
             % discard Puts the card back in the discard pile
             arguments
                 obj TrainsDeck
                 card TrainCard
+                randStream
             end
 
             obj.discardPile = [obj.discardPile, card];
@@ -219,7 +222,7 @@ classdef TrainsDeck < handle
             % should already be all the nFaceUpCardsNeeded, so this 
             % call would have no effect on the state of the cards 
             % face-up cards.
-            addAndCheckFaceUpCards(obj);
+            addAndCheckFaceUpCards(obj, randStream);
         end
 
         function cards = getFaceUpCards(obj)
@@ -261,9 +264,10 @@ classdef TrainsDeck < handle
         % used mainly for running the TrainDeck class and doing 
         % internal checking of the TrainDeck state. These are not to be 
         % called by other classes.
-        function shuffle(obj)
+        function shuffle(obj, randStream)
             arguments
                 obj TrainsDeck
+                randStream
             end
             % Append the discardPile to the drawPile array, this will allow 
             % us to reorder them in the same array. Note: even though the 
@@ -273,13 +277,13 @@ classdef TrainsDeck < handle
             % -- as appending empty arrays will not change the array.
             obj.drawPile = [obj.drawPile, obj.discardPile]; 
             obj.discardPile = TrainCard.empty;
-            newOrderIdx = randperm(length(obj.drawPile));
+            newOrderIdx = randperm(randStream, length(obj.drawPile));
     
             % Put the cards in their new order
             obj.drawPile(newOrderIdx) = obj.drawPile;
          end
 
-        function addAndCheckFaceUpCards(obj)
+        function addAndCheckFaceUpCards(obj, randStream)
             % This helper function starts by checking if the TrainsDeck 
             % object is drawable, and, if so, adds a card to the set of
             % face-up cards. Then, it checks that adding the new card has 
@@ -291,13 +295,14 @@ classdef TrainsDeck < handle
             % (IF there are at least nFaceUpCards in deck)
             arguments
                 obj TrainsDeck
+                randStream
             end
 
             if drawable(obj)
             % if we have less than the face up cards needed, continue 
             % adding cards until a valid set of face-up cards is chosen
                 while length(obj.faceUpCards) < obj.nFaceUpCardsNeeded
-                    obj.faceUpCards = [obj.faceUpCards, obj.dealCard];           
+                    obj.faceUpCards = [obj.faceUpCards, obj.dealCard(randStream)];           
     
                     % Check to make sure the face up cards are not comprised of 
                     % too many multicolored cards.
@@ -308,12 +313,12 @@ classdef TrainsDeck < handle
                         obj.discardPile = [obj.discardPile, obj.faceUpCards];
                         obj.faceUpCards = TrainCard.empty;
                     end % end of if "multicolored" block
-                    obj.checkDrawPile(1);
+                    obj.checkDrawPile(1, randStream);
                 end % end of length of cards in face-up deck
             end % end of drawable()
         end % end of function
 
-        function checkDrawPile(obj,nCards)
+        function checkDrawPile(obj, nCards, randStream)
             % Checks if there are less than nCards in the drawPile, 
             % shuffle the discardPile into the drawPile. Note: 
             % This shall be run every time the drawPile is changed. 
@@ -323,13 +328,14 @@ classdef TrainsDeck < handle
             arguments
                 obj TrainsDeck
                 nCards {mustBeInteger}
+                randStream
             end
 
             % If there are not nCards in the draw pile, then shuffle the
             % discardPile into the drawPile. (This would most often be used
             % when nCards = 0, => an empty drawPile.)
             if ~atLeastNCardsinDrawPile(obj,nCards)
-                shuffle(obj);
+                shuffle(obj, randStream);
             end
 
         end

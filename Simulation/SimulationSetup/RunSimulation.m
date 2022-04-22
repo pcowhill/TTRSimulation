@@ -7,24 +7,32 @@ function RunSimulation(initFunc, varargin)
     finalAxes = varargin{6};
     nMetrics = 8;
     nWorkers = varargin{7};
+    saveResults = varargin{8};
 
-    % Note: "rng controls the global stream, which determines 
-    % how rand, randi, randn, and randperm functions produce a 
-    % sequence of random numbers" (Mathworks). Since this is 
-    % global, this is the only generator we need. It does 
-    % not need to be reseeded.
+    % Create generator that supports substream processing -- since we have
+    % several workers processing different iterations (games), we need a
+    % separate random number stream for each
+    % https://www.mathworks.com/help/parallel-computing/control-random-number-streams-on-workers.html
     switch rngSeed
         case "Shuffle"
-            rng('shuffle'); % seeds the simulation with the current time
+           % use the current time as the seed
+           sc = parallel.pool.Constant(RandStream('Threefry', 'Seed','shuffle'));
         case "Consistent"
-            rng('default');
+           % use the default seed of 0
+           sc = parallel.pool.Constant(RandStream('Threefry'));
     end
    
     results=zeros(nIterations,nPlayers*nMetrics);
 
     finalGameObj=Game.empty;
+
     % Run nIterations of the game
     parfor (iter = 1:nIterations, nWorkers)
+        % Give each iteration (which can be executed in parallel with
+        % multiple workers) it's own random number stream.
+        stream = sc.Value;
+        stream.Substream = iter;
+
         % Instantiate logger -- "The logger will be "globally available as a
         % singleton instance.  This is because a single instance of Logger must
         % manage the log file being written to.  You can access the logger from multiple 
@@ -34,9 +42,10 @@ function RunSimulation(initFunc, varargin)
         if isfile(LOG_FILE_NAME)
             delete(LOG_FILE_NAME);
         end
+
         logger = log4m.getLogger(LOG_FILE_NAME);
         logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
-        results(iter,:) = gameObj.simulateGame(logger);
+        results(iter,:) = gameObj.simulateGame(logger, stream);
         fclose('all');
         if isfile(LOG_FILE_NAME)
             delete(LOG_FILE_NAME);
@@ -75,5 +84,5 @@ function RunSimulation(initFunc, varargin)
     delete('gameObj.mat');   
 
     % Analyze the results of all the trials
-    ProcessSimulationResults(results, nPlayers, finalAxes);
+    ProcessSimulationResults(results, nPlayers, finalAxes, saveResults, nIterations, rngSeed, nWorkers, gameObj.players, class(gameObj.rules));
 end

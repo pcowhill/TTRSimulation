@@ -24,7 +24,7 @@ classdef DestinationsDeck < handle
             obj.allDestCards = [varargin{:}];
         end
         
-        function init(obj)
+        function init(obj, randStream)
             % init Initializes/resets deck for a new game
             % This function puts ALL the cards in the deck and shuffles it. 
             % Assumption: For the cards that are dealt, the number of cards 
@@ -33,10 +33,11 @@ classdef DestinationsDeck < handle
             % TODO: Ask Rachel and Patrick to confirm my assumption^^
             arguments
                 obj DestinationsDeck
+                randStream
             end
 
             obj.currentCardsInDeck = obj.allDestCards;
-            shuffle(obj);
+            shuffle(obj, randStream);
         end
 
         function numCardsLeft = getNumCardsLeft(obj)
@@ -84,13 +85,14 @@ classdef DestinationsDeck < handle
             obj.currentCardsInDeck = [obj.currentCardsInDeck cards];
         end
         
-        function shuffle(obj)
+        function shuffle(obj, randStream)
             arguments
                 obj DestinationsDeck
+                randStream
             end
 
             % Randomize the order of the DestinationTicketCards
-            newOrderIdx = randperm(length(obj.currentCardsInDeck));
+            newOrderIdx = randperm(randStream, length(obj.currentCardsInDeck));
     
             % Put the cards in their new order
             obj.currentCardsInDeck(newOrderIdx) = obj.currentCardsInDeck;

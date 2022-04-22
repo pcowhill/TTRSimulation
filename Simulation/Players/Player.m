@@ -1,6 +1,6 @@
 classdef Player < handle & matlab.mixin.Heterogeneous
     %Player Base class
-    %   Abstract class for player agents. Subclasses can override 
+    %   Abstract class for player agents. Subclasses can override
 
     properties (Constant)
         PlayerColors = [Color.red Color.yellow Color.green Color.blue]
@@ -16,7 +16,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         destinationCardsHand DestinationTicketCard = DestinationTicketCard.empty
 
         victoryPoints = 0
-                
+
         nStartingTrains = 0
 
         publicHand TrainCard = TrainCard.empty
@@ -33,7 +33,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.color = Player.PlayerColors(playerNumber);
         end
 
-        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger)
+        function takeTurn(player, rules, board, trainsDeck, destinationsDeck, logger, randStream)
             %takeTurn Carry out a single turn
             %   Carry out chosen action using the provided board and decks.
             %   Assume board and decks are Handle type classes so they
@@ -46,6 +46,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 trainsDeck TrainsDeck
                 destinationsDeck DestinationsDeck
                 logger log4m
+                randStream
             end
 
             takenActions = struct();
@@ -64,23 +65,23 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
                     if isfield(chosenActions, 'route') && chosenActions.route > 0
-                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger);
+                        player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger, randStream);
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
                     elseif isfield(chosenActions, 'card') && chosenActions.card > 0
                         takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
-                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger);
+                        player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger, randStream);
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
                         takenActions.destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck, logger);
                     elseif isfield(chosenActions, 'sacrificeTrain') && chosenActions.sacrificeTrain
                         takenActions.wasTrainSacrificed = true;
-                        player.sacrificeTrain(trainsDeck, board, logger);
+                        player.sacrificeTrain(trainsDeck, board, logger, randStream);
                     elseif isfield(chosenActions, 'stealRoute') && chosenActions.stealRoute > 0
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.stealableRoutes(chosenActions.stealRoute)];
-                        player.stealRoute(rules, board, trainsDeck, possibleActions.stealableRoutes(chosenActions.stealRoute), possibleActions.stealableRouteColors(chosenActions.stealRoute), logger);
+                        player.stealRoute(rules, board, trainsDeck, possibleActions.stealableRoutes(chosenActions.stealRoute), possibleActions.stealableRouteColors(chosenActions.stealRoute), logger, randStream);
                     elseif isfield(chosenActions, 'blockRoute') && chosenActions.blockRoute > 0
                         takenActions.routesBlocked = [takenActions.routesBlocked possibleActions.blockableRoutes(chosenActions.blockRoute)];
-                        player.blockRoute(rules, board, trainsDeck, possibleActions.blockableRoutes(chosenActions.blockRoute), possibleActions.blockableRouteColors(chosenActions.blockRoute), logger);
+                        player.blockRoute(rules, board, trainsDeck, possibleActions.blockableRoutes(chosenActions.blockRoute), possibleActions.blockableRouteColors(chosenActions.blockRoute), logger, randStream);
                     else
                         turnOver = true;
                     end
@@ -133,16 +134,16 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             player.nStartingTrains=nStartingTrains;
             player.allPlayers = players;
             player.turnCount=0;
-            
+
             player.initPlayerSpecific(startingHand, board, destinationsDeck, nStartingTrains);
         end
     end
 
     methods (Access=private, Sealed=true)
-        function claimRoute(player, rules, board, trainsDeck, route, color, logger)
+        function claimRoute(player, rules, board, trainsDeck, route, color, logger, randStream)
            board.claim(route, player.color);
            indicesToDiscard = [];
-           
+
            nColorCards=0;
            nLocomotives=0;
            index = 1;
@@ -150,7 +151,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand) && color~=Color.multicolored
                if player.trainCardsHand(index).color == color
                    indicesToDiscard = [indicesToDiscard index];
-                   trainsDeck.discard(player.trainCardsHand(index));
+                   trainsDeck.discard(player.trainCardsHand(index), randStream);
                    nColorCards = nColorCards+1;
                end
                index = index+1;
@@ -161,7 +162,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                while length(indicesToDiscard) < route.length && index <= length(player.trainCardsHand)
                    if player.trainCardsHand(index).color == Color.multicolored
                        indicesToDiscard = [indicesToDiscard index];
-                       trainsDeck.discard(player.trainCardsHand(index));
+                       trainsDeck.discard(player.trainCardsHand(index), randStream);
                        nLocomotives = nLocomotives + 1;
                    end
                    index = index+1;
@@ -186,7 +187,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
            logger.writePlayerTurnDetails("Claim Route","Player " + activityLogStep);
         end
 
-        function stealRoute(player, rules, board, trainsDeck, route, color, logger)
+        function stealRoute(player, rules, board, trainsDeck, route, color, logger, randStream)
             arguments
                 player Player
                 rules Rules
@@ -195,6 +196,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 route Route
                 color Color
                 logger
+                randStream
             end
 
             % Discard the trains currently on the route
@@ -209,7 +211,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand) && color~=Color.multicolored
                 if player.trainCardsHand(index).color == color
                     indicesToDiscard = [indicesToDiscard index];
-                    trainsDeck.discard(player.trainCardsHand(index));
+                    trainsDeck.discard(player.trainCardsHand(index), randStream);
                 end
                 index = index+1;
             end
@@ -219,12 +221,12 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand)
                     if player.trainCardsHand(index).color == Color.multicolored
                         indicesToDiscard = [indicesToDiscard index];
-                        trainsDeck.discard(player.trainCardsHand(index));
+                        trainsDeck.discard(player.trainCardsHand(index), randStream);
                     end
                     index = index+1;
                 end
             end
- 
+
             assert(length(indicesToDiscard)==numCardsRequired && length(indicesToDiscard) == length(unique(indicesToDiscard)), "Player didn't discard number of cards to claim route");
             player.trainCardsHand(indicesToDiscard) = [];
             player.victoryPoints = player.victoryPoints + rules.getRoutePoints(route);
@@ -232,7 +234,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             logger.writePlayerTurnDetails("Steal Route","Player " + activityLogStep);
         end
 
-        function blockRoute(player, rules, board, trainsDeck, route, color, logger)
+        function blockRoute(player, rules, board, trainsDeck, route, color, logger, randStream)
             arguments
                 player Player
                 rules Rules
@@ -241,6 +243,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 route Route
                 color Color
                 logger
+                randStream
             end
 
             board.block(route)
@@ -255,7 +258,7 @@ classdef Player < handle & matlab.mixin.Heterogeneous
             while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand) && color~=Color.multicolored
                 if player.trainCardsHand(index).color == color
                     indicesToDiscard = [indicesToDiscard index];
-                    trainsDeck.discard(player.trainCardsHand(index));
+                    trainsDeck.discard(player.trainCardsHand(index), randStream);
                 end
                 index = index+1;
             end
@@ -265,39 +268,40 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 while length(indicesToDiscard) < numCardsRequired && index <= length(player.trainCardsHand)
                     if player.trainCardsHand(index).color == Color.multicolored
                         indicesToDiscard = [indicesToDiscard index];
-                        trainsDeck.discard(player.trainCardsHand(index));
+                        trainsDeck.discard(player.trainCardsHand(index), randStream);
                     end
                     index = index+1;
                 end
             end
- 
+
             assert(length(indicesToDiscard)==numCardsRequired && length(indicesToDiscard) == length(unique(indicesToDiscard)), "Player didn't discard number of cards to claim route");
             player.trainCardsHand(indicesToDiscard) = [];
             activityLogStep = "blocked the route from " + string(route.locations(1)) + " to " + string(route.locations(2)) + ".";
             logger.writePlayerTurnDetails("Block Route","Player " + activityLogStep);
         end
 
-        function drawTrainCard(player, trainsDeck, card, logger)
-            drawnCard = trainsDeck.drawCard(card);
+        function drawTrainCard(player, trainsDeck, card, logger, randStream)
+            drawnCard = trainsDeck.drawCard(card, randStream);
             player.trainCardsHand = [player.trainCardsHand drawnCard];
             player.publicHand = [player.publicHand drawnCard];
-                 
+
             activityLogStep = "drew a " + string(card.color) + " card.";
             logger.writePlayerTurnDetails("Draw Train Card","Player " + activityLogStep);
         end
 
-        function sacrificeTrain(player, trainsDeck, board, logger)
+        function sacrificeTrain(player, trainsDeck, board, logger, randStream)
             % Take a free action to discard a train piece for a random card
             arguments
                 player Player
                 trainsDeck TrainsDeck
                 board Board
                 logger
+                randStream
             end
-            
+
             logger.writePlayerTurnDetails("Sacrifice Train", "Player sacrificed a train to draw an additional card.");
             board.discardTrain(player.color, 1);
-            player.drawTrainCard(trainsDeck, TrainCard(Color.unknown), logger);
+            player.drawTrainCard(trainsDeck, TrainCard(Color.unknown), logger, randStream);
         end
 
         function drawDestinations(player, board, destinationsDeck, logger)
