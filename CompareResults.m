@@ -163,7 +163,7 @@ end
 
 %% buildRunDataTable -- This function builds the runData table for the specified field.
 function compareStruct = buildRunDataTable(compareStruct, compareField, playerField, simNumber, playerLabels, playerTypes, ruleSetRep, i)
-    compareStruct.(compareField).runData.(playerField) = [compareStruct.(compareField).runData.(playerField); table(simNumber, playerLabels, playerTypes', ruleSetRep, 'VariableNames', {'Sim #', 'Player #', 'Player Type', 'Rule Set'}), compareStruct.file(i).(compareField)];
+    compareStruct.(compareField).runData.(playerField) = [compareStruct.(compareField).runData.(playerField); table(simNumber, playerLabels, playerTypes.', ruleSetRep, 'VariableNames', {'Sim #', 'Player #', 'Player Type', 'Rule Set'}), compareStruct.file(i).(compareField)];
     compareStruct.(compareField).runData.(playerField).Properties.RowNames = {}; % Delete the old name for the rows, since now we are constructing a table with all simulations compiled
 end
 
@@ -293,8 +293,8 @@ function compareStruct = processNPlayersDiffInRankData(compareStruct, nPlayersAl
 
             % Now that all the files have been processed and their rankings
             % gathered, let's take the average of each rank.
-            avgDiffInRanksAllSims = mean(differencesBetweenRanks');
-            sdDiffInRanksAllSims = std(differencesBetweenRanks');
+            avgDiffInRanksAllSims = mean(differencesBetweenRanks.', 1);
+            sdDiffInRanksAllSims = std(differencesBetweenRanks.', 0, 1);
             switch n
                 case 2
                     rankNames = {'1st and 2nd'};
@@ -308,7 +308,7 @@ function compareStruct = processNPlayersDiffInRankData(compareStruct, nPlayersAl
             avgLabel = horzcat('Avg Difference-', nPlayersFieldName);
             sdLabel = horzcat('Std Dev-', nPlayersFieldName);
 
-            compareStruct.(compareField).summary.(nPlayersFieldName) = table(nPlayersRep, rankNames, avgDiffInRanksAllSims', sdDiffInRanksAllSims', 'VariableNames', {'# Players', 'Rank', horzcat(avgLabel{:}), horzcat(sdLabel{:})});
+            compareStruct.(compareField).summary.(nPlayersFieldName) = table(nPlayersRep, rankNames, avgDiffInRanksAllSims.', sdDiffInRanksAllSims.', 'VariableNames', {'# Players', 'Rank', horzcat(avgLabel{:}), horzcat(sdLabel{:})});
             compareStruct.(compareField).summary.(nPlayersFieldName)
         end
     end
@@ -555,8 +555,8 @@ function compareStruct = buildWinningRoutesTables(compareStruct, fieldName, nSim
             totalIterations = totalIterations + compareStruct.file(idx(i)).settings.nIterations;
             compareStruct.winningRoutesTbl.(fieldName) = [compareStruct.winningRoutesTbl.(fieldName), compareStruct.file(idx(i)).winningRoutesTbl(:,3), num2cell(cell2mat(compareStruct.file(idx(i)).winningRoutesTbl(:,3))./compareStruct.file(idx(i)).settings.nIterations)];
         end
-        header = horzcat(header, 'Total # Games-' + fieldName, 'Total % Games-'+ fieldName);
     end
+    header = horzcat(header, 'Total # Games-' + fieldName, 'Total % Games-'+ fieldName);
 
     compareStruct.winningRoutesTbl.(fieldName) = [compareStruct.winningRoutesTbl.(fieldName), num2cell(totalGamesAcrossSimulations), num2cell(totalGamesAcrossSimulations./totalIterations)];
     compareStruct.winningRoutesTbl.(fieldName) = cell2table(compareStruct.winningRoutesTbl.(fieldName), 'VariableNames', header);
