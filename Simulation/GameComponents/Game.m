@@ -49,8 +49,8 @@ classdef Game
             gameOver = false;
             playerIx = 1;
             turnCount = 0;
-            numTimesAhead = zeros(1,length(game.players));
-            numTimesAheadLong = zeros(1,length(game.players));
+            numTurnsAhead = zeros(1,length(game.players));
+            numTurnsAheadLong = zeros(1,length(game.players));
 
             % Play game until rules say it's over
             while ~gameOver
@@ -67,7 +67,7 @@ classdef Game
                     % Check current scores, not including the longest route
                     maxVictoryPts = max([game.players.victoryPoints]);
                     idx = find(maxVictoryPts == [game.players.victoryPoints]);
-                    numTimesAhead(idx) = numTimesAhead(idx) + 1;
+                    numTurnsAhead(idx) = numTurnsAhead(idx) + 1;
 
                     % Check current scores, factoring in longest route
                     longRoutePts = max([game.rules.getLongestRoute(game.board, game.players)]);
@@ -75,12 +75,12 @@ classdef Game
                     scoreWithLongestRoute = [game.players.victoryPoints] + (ismember(1:length(game.players),longRouteIdx))*[game.rules.longestRoutePoints];
                     maximum = max(scoreWithLongestRoute);
                     maxIdx = find(maximum==max(scoreWithLongestRoute));
-                    numTimesAheadLong(1,maxIdx) = numTimesAheadLong(1,maxIdx) + 1;
+                    numTurnsAheadLong(1,maxIdx) = numTurnsAheadLong(1,maxIdx) + 1;
                end
             end
 
-            numTimesAhead
-            numTimesAheadLong
+            numTurnsAhead
+            numTurnsAheadLong
 
             % Calculate Final Scores
             game.rules.updateEndgameScores(game.board, game.players);
@@ -88,10 +88,10 @@ classdef Game
 
             % Game results, metrics, and visualization - This will be stuff that can be collected at
             % the end of a game
-            results = processGameResults(game, playerIx, turnCount, finalScores, logger);
+            results = processGameResults(game, playerIx, turnCount, finalScores, logger, numTurnsAhead, numTurnsAheadLong);
         end
 
-        function results = processGameResults(game, playerIx, turnCount, finalScores, logger)
+        function results = processGameResults(game, playerIx, turnCount, finalScores, logger, numTurnsAhead, numTurnsAheadLong)
 
             % Calculate Player Specific Metrics
             lastPlayer = playerIx;
@@ -137,8 +137,10 @@ classdef Game
             % destCardsCompleted, playerTurns, routesClaimed, avgRouteLength,
             %and longestRoute in the game results -- all of these are arrays
             % of size 1 * nPlayers
-            results = [finalScores, trainsPlayed, trainCardsLeft, ...
-                destCardsCompleted, playerTurns, routesClaimed, avgRouteLength, longestRoute];
+             gameResults = [finalScores, trainsPlayed, trainCardsLeft, ...
+                 destCardsCompleted, playerTurns, routesClaimed, ...
+                 avgRouteLength, longestRoute, numTurnsAhead, numTurnsAheadLong];
+            results.summary = gameResults;
 
             % Increment number of times each route claimed by winner(s)
             winningScore = max(finalScores);
@@ -157,6 +159,8 @@ classdef Game
             % action or combination of actions?
             winningRoutesTbl = [{game.board.routeGraph.Edges.EndNodes}, {num2cell(game.nTimesRouteClaimedByWinner')}];
             [winningRoutesTbl{1}, winningRoutesTbl{2}]
+
+            results.winningRoutesTbl = winningRoutesTbl;
         end
 
     end
