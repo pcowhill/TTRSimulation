@@ -23,8 +23,6 @@ function RunSimulation(initFunc, varargin)
    
     results = struct('summary', {}, 'winningRoutesTbl', {});
     finalGameObj=Game.empty;
-    cumulativeResults.summary = "";
-    cumulativeResults.winningRoutesTbl = "";
     
     % Run nIterations of the game
     parfor (iter = 1:nIterations, nWorkers)
@@ -46,7 +44,6 @@ function RunSimulation(initFunc, varargin)
         logger = log4m.getLogger(LOG_FILE_NAME);
         logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
         results(iter,:) = gameObj.simulateGame(logger, stream);
-        %cumulativeResults = results;
 
         fclose('all');
         if isfile(LOG_FILE_NAME)
