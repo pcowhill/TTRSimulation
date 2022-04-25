@@ -59,6 +59,7 @@ classdef Game
                game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger, randStream);
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
+               gameOver = gameOver || all([game.players.skippedLastTurn]);
                playerIx = mod(playerIx, length(game.players))+1;
 
                 % Balance Measure -- Result Known Long Ahead of Time? -- Track who is winning during each turn

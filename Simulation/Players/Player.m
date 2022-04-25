@@ -26,6 +26,10 @@ classdef Player < handle & matlab.mixin.Heterogeneous
         turnCount
     end
 
+    properties (SetAccess = public)
+        skippedLastTurn = false
+    end
+
     methods (Access = public)
         function player = Player(playerNumber)
             %Player Construct a player
@@ -49,6 +53,8 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 randStream
             end
 
+            player.skippedLastTurn = true;
+
             takenActions = struct();
             takenActions.routesClaimed = Route.empty;
             takenActions.cardsDrawn = TrainCard.empty;
@@ -65,21 +71,27 @@ classdef Player < handle & matlab.mixin.Heterogeneous
                 else
                     chosenActions = player.chooseAction(board, possibleActions);
                     if isfield(chosenActions, 'route') && chosenActions.route > 0
+                        player.skippedLastTurn = false;
                         player.claimRoute(rules, board, trainsDeck, possibleActions.claimableRoutes(chosenActions.route), possibleActions.claimableRouteColors(chosenActions.route), logger, randStream);
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.claimableRoutes(chosenActions.route)];
                     elseif isfield(chosenActions, 'card') && chosenActions.card > 0
+                        player.skippedLastTurn = false;
                         takenActions.cardsDrawn = [takenActions.cardsDrawn possibleActions.drawableCards(chosenActions.card)];
                         player.drawTrainCard(trainsDeck, possibleActions.drawableCards(chosenActions.card), logger, randStream);
                     elseif isfield(chosenActions, 'drawDestinationCards') && chosenActions.drawDestinationCards
+                        player.skippedLastTurn = false;
                         takenActions.destinationsDrawn=true;
                         player.drawDestinations(board,destinationsDeck, logger);
                     elseif isfield(chosenActions, 'sacrificeTrain') && chosenActions.sacrificeTrain
+                        player.skippedLastTurn = false;
                         takenActions.wasTrainSacrificed = true;
                         player.sacrificeTrain(trainsDeck, board, logger, randStream);
                     elseif isfield(chosenActions, 'stealRoute') && chosenActions.stealRoute > 0
+                        player.skippedLastTurn = false;
                         takenActions.routesClaimed = [takenActions.routesClaimed possibleActions.stealableRoutes(chosenActions.stealRoute)];
                         player.stealRoute(rules, board, trainsDeck, possibleActions.stealableRoutes(chosenActions.stealRoute), possibleActions.stealableRouteColors(chosenActions.stealRoute), logger, randStream);
                     elseif isfield(chosenActions, 'blockRoute') && chosenActions.blockRoute > 0
+                        player.skippedLastTurn = false;
                         takenActions.routesBlocked = [takenActions.routesBlocked possibleActions.blockableRoutes(chosenActions.blockRoute)];
                         player.blockRoute(rules, board, trainsDeck, possibleActions.blockableRoutes(chosenActions.blockRoute), possibleActions.blockableRouteColors(chosenActions.blockRoute), logger, randStream);
                     else
