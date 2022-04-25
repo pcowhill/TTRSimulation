@@ -20,9 +20,11 @@ function RunSimulation(initFunc, varargin)
            % use the default seed of 0
            sc = parallel.pool.Constant(RandStream('Threefry'));
     end
-   
+
+    % Initialize results struct for storing metrics collected from each
+    % game. It contains playersummary metrics and an array containing the 
+    % total number of times each route was claimed by the winner of a game.
     results = struct('summary', {}, 'winningRoutesTbl', {});
-    finalGameObj=Game.empty;
     
     % Run nIterations of the game
     parfor (iter = 1:nIterations, nWorkers)
