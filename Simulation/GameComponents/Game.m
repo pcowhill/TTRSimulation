@@ -160,6 +160,7 @@ classdef Game
 
             % in the rare case there is more than one winner, loop over the winner
             % colors array
+            routeOwners = game.board.routeGraph.Edges.Owner;
             for i = 1:length(winnerColor)
                idx=find(routeOwners==winnerColor(i));
                game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
