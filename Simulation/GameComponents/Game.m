@@ -74,7 +74,7 @@ classdef Game
                     longRouteIdx = find(longRoutePts == [game.rules.getLongestRoute(game.board, game.players)]);
                     scoreWithLongestRoute = [game.players.victoryPoints] + (ismember(1:length(game.players),longRouteIdx))*[game.rules.longestRoutePoints];
                     maximum = max(scoreWithLongestRoute);
-                    maxIdx = find(maximum==max(scoreWithLongestRoute));
+                    maxIdx = find(maximum==scoreWithLongestRoute);
                     numTurnsAheadLong(1,maxIdx) = numTurnsAheadLong(1,maxIdx) + 1;
                end
             end
@@ -95,6 +95,7 @@ classdef Game
 
             % Calculate Player Specific Metrics
             lastPlayer = playerIx;
+            wins=repelem(0, 1, length(game.players));
 
             for playerIx = 1:length(game.players)
                 % number of trains played
@@ -133,19 +134,28 @@ classdef Game
              activityLog = game.returnActivityLog(logger);
              activityLog
 
+             % Increment number of times each route claimed by winner(s)
+            winningScore = max(finalScores);
+            winnerIdx = [find(winningScore == finalScores)];
+            if length(winnerIdx) > 1
+                winnerIdx = winnerIdx(destCardsCompleted(1,winnerIdx) == max(destCardsCompleted(1,winnerIdx)));
+                if length(winnerIdx) > 1
+                    winnerIdx = winnerIdx(longestRoute(1,winnerIdx) == max(longestRoute(1,winnerIdx)));
+                end
+            end
+            wins(1,winnerIdx) = wins(1,winnerIdx) + 1/length(winnerIdx);
+            winnerColor = [game.players(winnerIdx).color]
+
             % return finalScores, trainsPlayed, trainCardsLeft,
             % destCardsCompleted, playerTurns, routesClaimed, avgRouteLength,
             %and longestRoute in the game results -- all of these are arrays
             % of size 1 * nPlayers
              gameResults = [finalScores, trainsPlayed, trainCardsLeft, ...
                  destCardsCompleted, playerTurns, routesClaimed, ...
-                 avgRouteLength, longestRoute, numTurnsAhead, numTurnsAheadLong];
+                 avgRouteLength, longestRoute, numTurnsAhead, numTurnsAheadLong, wins];
             results.summary = gameResults;
 
-            % Increment number of times each route claimed by winner(s)
-            winningScore = max(finalScores);
-            winnerIdx = [find(winningScore == finalScores)];
-            winnerColor = [game.players(winnerIdx).color]
+            
 
             % in the rare case there is more than one winner, loop over the winner
             % colors array

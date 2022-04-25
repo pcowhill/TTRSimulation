@@ -16,6 +16,7 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResult
     longestRouteCols=7*nPlayers+1:8*nPlayers;
     numTurnsAheadCols=8*nPlayers+1:9*nPlayers;
     numTurnsAheadLongCols=9*nPlayers+1:10*nPlayers;
+    winsCols = 10*nPlayers+1:11*nPlayers;
 
     playerNames = "Player " + [1:nPlayers];
 
@@ -25,7 +26,7 @@ function ProcessSimulationResults(allSimResults, nPlayers, finalAxes, saveResult
 
     % Insert metrics about the statistical significance of the win
     % rates -- Chi-Square Significance Test
-    summaryResults = processWinRates(nIterations, playerNames, combinedSimResults, scoresCols, nPlayers, summaryResults);
+    summaryResults = processWinRates(nIterations, playerNames, combinedSimResults, scoresCols, nPlayers, summaryResults, winsCols);
 
     % Print information about correlations between key statistics
     summaryResults = processCorrelationStats(combinedSimResults, nPlayers, summaryResults, nIterations);
@@ -203,8 +204,9 @@ end
 
 
 %% processWinRates functions: processWinRates, CalcWinRates, reportStatSignificanceWinRates
-function summaryResults = processWinRates(nIters, playerNames, combinedSimResults, scoresCols, nPlayers, summaryResults)
-    winRates = CalcWinRates(nIters, combinedSimResults, scoresCols, nPlayers);
+function summaryResults = processWinRates(nIters, playerNames, combinedSimResults, scoresCols, nPlayers, summaryResults, winsCols)
+%     winRates = CalcWinRates(nIters, combinedSimResults, scoresCols, nPlayers);
+    winRates = transpose(sum(combinedSimResults(:,winsCols),1)/nIters);
     summaryResults.winRates = table(winRates, 'RowNames', playerNames);
     summaryResults.winRates
 
@@ -260,7 +262,7 @@ end
 
 %% processCorrelation Stats functions: processCorrelationStats, buildCorrelationMatrix, dispCorrelationMatrix, and generateCorrelationTable
 function summaryResults = processCorrelationStats(combinedSimResults, nPlayers, summaryResults, nIters)
-    nMetrics = size(combinedSimResults,2) / nPlayers;
+    nMetrics = (size(combinedSimResults,2)-nPlayers) / nPlayers;
     X = buildCorrelationMatrix(combinedSimResults, nPlayers, nMetrics);
     dispCorrelationMatrix(X, nMetrics);
 
