@@ -149,15 +149,15 @@ classdef Game
             % in the rare case there is more than one winner, perform the
             % tie breaker logic
             routeOwners = game.board.routeGraph.Edges.Owner;
-            if length(winnerColor) > 2
+            if length(winnerColor) > 1
                 % Find the player with the most completed destination cards
                 winnerIdx = [find(max(destCardsCompleted) == destCardsCompleted)];
                 winnerColor = [game.players(winnerIdx).color];
-                if length(winnerColor) > 2
+                if length(winnerColor) > 1
                     % Find the player with the longest route
                     winnerIdx = [find(max(longestRoute) == longestRoute)];
                     winnerColor = [game.players(winnerIdx).color];
-                    if length(winnerColor) > 2
+                    if length(winnerColor) > 1
                         % Decide the winner randomly
                         winnerIdx = randsample(winnerIdx,1);
                         winnerColor = [game.players(winnerIdx).color];
