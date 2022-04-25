@@ -151,11 +151,13 @@ classdef Game
             routeOwners = game.board.routeGraph.Edges.Owner;
             if length(winnerColor) > 1
                 % Find the player with the most completed destination cards
-                winnerIdx = [find(max(destCardsCompleted) == destCardsCompleted)];
+                candidateDestCardsCompleted = destCardsCompleted(winnerIdx);
+                winnerIdx = [find(max(candidateDestCardsCompleted) == candidateDestCardsCompleted)];
                 winnerColor = [game.players(winnerIdx).color];
                 if length(winnerColor) > 1
                     % Find the player with the longest route
-                    winnerIdx = [find(max(longestRoute) == longestRoute)];
+                    candidateLongestRoute = longestRoute(winnerIdx);
+                    winnerIdx = [find(max(candidateLongestRoute) == candidateLongestRoute)];
                     winnerColor = [game.players(winnerIdx).color];
                     if length(winnerColor) > 1
                         % Decide the winner randomly
