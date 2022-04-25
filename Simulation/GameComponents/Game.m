@@ -59,6 +59,7 @@ classdef Game
                game.players(playerIx).takeTurn(game.rules, game.board, game.trainsDeck, game.destinationsDeck, logger, randStream);
                game.rules.updateGameState(game.board, game.players, game.trainsDeck, game.destinationsDeck);
                gameOver = game.rules.isGameOver();
+               gameOver = gameOver || all([game.players.skippedLastTurn]);
                playerIx = mod(playerIx, length(game.players))+1;
 
                 % Balance Measure -- Result Known Long Ahead of Time? -- Track who is winning during each turn
@@ -157,13 +158,28 @@ classdef Game
 
             
 
-            % in the rare case there is more than one winner, loop over the winner
-            % colors array
+            % in the rare case there is more than one winner, perform the
+            % tie breaker logic
             routeOwners = game.board.routeGraph.Edges.Owner;
-            for i = 1:length(winnerColor)
-               idx=find(routeOwners==winnerColor(i));
-               game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
+            if length(winnerColor) > 1
+                % Find the player with the most completed destination cards
+                candidateDestCardsCompleted = destCardsCompleted(winnerIdx);
+                winnerIdx = [find(max(candidateDestCardsCompleted) == candidateDestCardsCompleted)];
+                winnerColor = [game.players(winnerIdx).color];
+                if length(winnerColor) > 1
+                    % Find the player with the longest route
+                    candidateLongestRoute = longestRoute(winnerIdx);
+                    winnerIdx = [find(max(candidateLongestRoute) == candidateLongestRoute)];
+                    winnerColor = [game.players(winnerIdx).color];
+                    if length(winnerColor) > 1
+                        % Decide the winner randomly
+                        winnerIdx = randsample(winnerIdx,1);
+                        winnerColor = [game.players(winnerIdx).color];
+                    end
+                end
             end
+            idx=find(routeOwners==winnerColor);
+            game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
 
             % Keep track of top winning routes -- how powerful is a given
             % action or combination of actions?
