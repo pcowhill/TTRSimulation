@@ -158,28 +158,12 @@ classdef Game
 
             
 
-            % in the rare case there is more than one winner, perform the
-            % tie breaker logic
-            routeOwners = game.board.routeGraph.Edges.Owner;
-            if length(winnerColor) > 1
-                % Find the player with the most completed destination cards
-                candidateDestCardsCompleted = destCardsCompleted(winnerIdx);
-                winnerIdx = [find(max(candidateDestCardsCompleted) == candidateDestCardsCompleted)];
-                winnerColor = [game.players(winnerIdx).color];
-                if length(winnerColor) > 1
-                    % Find the player with the longest route
-                    candidateLongestRoute = longestRoute(winnerIdx);
-                    winnerIdx = [find(max(candidateLongestRoute) == candidateLongestRoute)];
-                    winnerColor = [game.players(winnerIdx).color];
-                    if length(winnerColor) > 1
-                        % Decide the winner randomly
-                        winnerIdx = randsample(winnerIdx,1);
-                        winnerColor = [game.players(winnerIdx).color];
-                    end
-                end
+            % in the rare case there is more than one winner, loop over the winner
+            % colors array
+            for i = 1:length(winnerColor)
+               idx=find(routeOwners==winnerColor(i));
+               game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
             end
-            idx=find(routeOwners==winnerColor);
-            game.nTimesRouteClaimedByWinner(1, idx) = game.nTimesRouteClaimedByWinner(1, idx) + 1;
 
             % Keep track of top winning routes -- how powerful is a given
             % action or combination of actions?
