@@ -74,7 +74,7 @@ classdef Game
                     longRouteIdx = find(longRoutePts == [game.rules.getLongestRoute(game.board, game.players)]);
                     scoreWithLongestRoute = [game.players.victoryPoints] + (ismember(1:length(game.players),longRouteIdx))*[game.rules.longestRoutePoints];
                     maximum = max(scoreWithLongestRoute);
-                    maxIdx = find(maximum==max(scoreWithLongestRoute));
+                    maxIdx = find(maximum==scoreWithLongestRoute);
                     numTurnsAheadLong(1,maxIdx) = numTurnsAheadLong(1,maxIdx) + 1;
                end
             end
