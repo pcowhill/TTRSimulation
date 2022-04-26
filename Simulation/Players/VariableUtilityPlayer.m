@@ -68,7 +68,7 @@ classdef VariableUtilityPlayer < Player
                 player.destinationsCompleted=Rules.getTicketsCompleted(board, player);
                 player.checkDestinations=false;
             end
-            if player.shouldDrawDestinationCards(board)
+            if possibleActions.canDrawDestinationCards && player.shouldDrawDestinationCards(board)
                 chosenActions.drawDestinationCards=true;
                 chosenActions.card=0;
                 chosenActions.route=0;

@@ -5,7 +5,6 @@ function RunSimulation(initFunc, varargin)
     nIterations = varargin{2};
     rngSeed = varargin{5};
     finalAxes = varargin{6};
-    nMetrics = 8;
     nWorkers = varargin{7};
     saveResults = varargin{8};
 
@@ -21,11 +20,12 @@ function RunSimulation(initFunc, varargin)
            % use the default seed of 0
            sc = parallel.pool.Constant(RandStream('Threefry'));
     end
-   
-    results=zeros(nIterations,nPlayers*nMetrics);
 
-    finalGameObj=Game.empty;
-
+    % Initialize results struct for storing metrics collected from each
+    % game. It contains playersummary metrics and an array containing the 
+    % total number of times each route was claimed by the winner of a game.
+    results = struct('summary', {}, 'winningRoutesTbl', {});
+    
     % Run nIterations of the game
     parfor (iter = 1:nIterations, nWorkers)
         % Give each iteration (which can be executed in parallel with
@@ -46,6 +46,7 @@ function RunSimulation(initFunc, varargin)
         logger = log4m.getLogger(LOG_FILE_NAME);
         logger.writeGameNumber("RunSimulation","Game # " + iter + " was started.");
         results(iter,:) = gameObj.simulateGame(logger, stream);
+
         fclose('all');
         if isfile(LOG_FILE_NAME)
             delete(LOG_FILE_NAME);

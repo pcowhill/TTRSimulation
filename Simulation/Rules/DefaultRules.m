@@ -87,6 +87,19 @@ classdef DefaultRules < Rules
             end
         end
 
+        function points = getDestinationTicketPoints(rules, ticket, completed)
+            %getDestinationTicketPoints Return the number of victory points the given
+            %destination ticket is worth
+            if completed
+                % add points if ticket was completed
+                points = ticket.pointValue;
+            else
+                % subtract points if ticket was not completed
+                points = -ticket.pointValue;
+            end
+       
+        end
+
         function updateGameState(rules, board, players, trainsDeck, destinationsDeck)
             playerTrains=Rules.getPlayerTrains(board, players, rules.startingTrains);
             for p = 1:length(players)
@@ -118,13 +131,7 @@ classdef DefaultRules < Rules
                 destinationTickets = players(playerIx).destinationCardsHand;
                 ticketsCompleted = Rules.getTicketsCompleted(board,players(playerIx));
                 for destIx=1:length(destinationTickets)
-                    if ticketsCompleted(destIx)
-                        % add points if ticket was completed
-                        players(playerIx).addToVictoryPoints(destinationTickets(destIx).pointValue);
-                    else
-                        % subtract points if ticket was not completed
-                        players(playerIx).addToVictoryPoints(-destinationTickets(destIx).pointValue);
-                    end
+                    players(playerIx).addToVictoryPoints(rules.getDestinationTicketPoints(destinationTickets(destIx),ticketsCompleted(destIx)));
                 end
             end
 
