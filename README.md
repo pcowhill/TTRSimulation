@@ -76,17 +76,17 @@ CompareResults('738628.0539Consistent2DummyDummyDestinationTicketLongRoute6Defau
 
 
 
-# Unit Testing
-Portions of the code are covered by unittests.  These tests are contained
-within the tests folder in the top directory and utilize the MATLAB unit
-testing framework.  As such, these tests can be run by calling the `runtests`
-function within the MATLAB command window.
-
-
-
 NOTE: From the command line, you can also pass an entire
 directory to the CompareResults function instead of entering
 file names individually.
 ENTER:
 fileDir = dir('*.mat');
 CompareResults(fileDir(:).name);
+
+
+
+# Unit Testing
+Portions of the code are covered by unittests.  These tests are contained
+within the tests folder in the top directory and utilize the MATLAB unit
+testing framework.  As such, these tests can be run by calling the `runtests`
+function within the MATLAB command window.
