@@ -314,7 +314,7 @@ function compareStruct = processNPlayersDiffInRankData(compareStruct, nPlayersAl
     end
 end
 
-%% compileWinRatesStatsSigResults - This function compiles the results of the pairwise
+%% compileWinRatesStatSigResults - This function compiles the results of the pairwise
 % statistical significance tests for win rates for each file.
 function compareStruct = compileWinRatesStatSigResults(compareStruct, compareField, nPlayersAllSims) 
     varNames = {'Sim #', '# Players', '# Iters', 'Player A Type', 'Player B Type'};
