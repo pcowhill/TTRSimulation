@@ -179,15 +179,11 @@ classdef Board < handle
             %getNumOfTrains Get the number of trains on the board of the
             %given color
 
-            numTrains = 0;
-            numRoutes = length(board.initialRoutes);
-            for iRoute = 1:numRoutes
-                if board.routeGraph.Edges.('Owner')(iRoute) == color
-                    numTrains = numTrains + board.routeGraph.Edges.('Length')(iRoute);
-                end
-            end
-
             numTrains = sum(board.routeGraph.Edges.Length(board.routeGraph.Edges.Owner==color));
+
+            if isKey(board.discardedTrains, color.string)
+                numTrains = numTrains + board.discardedTrains(color.string);
+            end
         end
 
         function unclaimedRoutes = getUnclaimedRoutes(board)
