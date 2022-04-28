@@ -71,6 +71,7 @@ classdef Board < handle
             % init method
             % Sets up the existing Board object for a new game.
             board.resetRouteOwners();
+            board.discardedTrains = containers.Map();
         end
 
         function tf = isOwned(obj, route)
