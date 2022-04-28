@@ -9,6 +9,7 @@ classdef Board < handle
     properties (SetAccess = private)
         initialRoutes Route % An array containing all of the route objects passed to the constructor
         routeGraph          % MATLAB undirected multigraph object containing dynamic information about the routes
+        discardedTrains containers.Map % A map containing train pieces that have been discarded by players
     end
     
     methods
@@ -70,6 +71,7 @@ classdef Board < handle
             % init method
             % Sets up the existing Board object for a new game.
             board.resetRouteOwners();
+            board.discardedTrains = containers.Map();
         end
 
         function tf = isOwned(obj, route)
@@ -143,6 +145,30 @@ classdef Board < handle
 
             obj.routeGraph.Edges.('Owner')(edgeIndex) = color; %#ok<FNDSB>
         end
+        
+        function block(obj, route)
+            % block method
+            % Sets the current over of a route to unknown which signifies
+            % that the route is not owned by any of the player, and nor is
+            % it available to be claimed (since it is not gray).
+            % This DOES overwrite the current owner if there is one.
+
+            obj.claim(route, Color.unknown);
+        end
+
+        function discardTrain(board, color, amount)
+            arguments
+                board Board
+                color Color
+                amount {mustBeInteger}
+            end
+
+            if isKey(board.discardedTrains, color.string)
+                board.discardedTrains(color.string) = board.discardedTrains(color.string) + amount;
+            else
+                board.discardedTrains(color.string) = amount;
+            end
+        end
 
         function obj = resetRouteOwners(obj)
             % resetRouteOwners method
@@ -154,15 +180,11 @@ classdef Board < handle
             %getNumOfTrains Get the number of trains on the board of the
             %given color
 
-            numTrains = 0;
-            numRoutes = length(board.initialRoutes);
-            for iRoute = 1:numRoutes
-                if board.routeGraph.Edges.('Owner')(iRoute) == color
-                    numTrains = numTrains + board.routeGraph.Edges.('Length')(iRoute);
-                end
-            end
-
             numTrains = sum(board.routeGraph.Edges.Length(board.routeGraph.Edges.Owner==color));
+
+            if isKey(board.discardedTrains, color.string)
+                numTrains = numTrains + board.discardedTrains(color.string);
+            end
         end
 
         function unclaimedRoutes = getUnclaimedRoutes(board)
@@ -170,6 +192,16 @@ classdef Board < handle
             routeIds = board.routeGraph.Edges.id(unclaimedEdges);
             [~,cols] = find(routeIds==[board.initialRoutes.id]);
             unclaimedRoutes = board.initialRoutes(cols);
+        end
+
+        function claimedRoutes = getClaimedRoutes(board)
+            arguments
+                board Board
+            end
+            claimedEdges = board.routeGraph.Edges.Owner~=Color.gray;
+            routeIds = board.routeGraph.Edges.id(claimedEdges);
+            [~, cols] = find(routeIds==[board.initialRoutes.id]);
+            claimedRoutes = board.initialRoutes(cols);
         end
     end
 end

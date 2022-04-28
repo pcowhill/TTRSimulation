@@ -313,7 +313,11 @@ classdef VariableUtilityPlayer < Player
             for colorIx=1:length(colors)
                 color = colors(colorIx);
                 routesOfColor = unclaimedRoutes(or(color==Color.multicolored, [unclaimedRoutes.color]==color));
-                [rows,~] = find([routesOfColor.id]==player.routeIds);
+                try
+                    [rows,~] = find([routesOfColor.id]==player.routeIds);
+                catch
+                    rows = [];
+                end
                 
                 if isempty(rows)
                     utility=0;
