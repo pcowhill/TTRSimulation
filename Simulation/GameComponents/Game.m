@@ -115,6 +115,9 @@ classdef Game
 
                 idxOfRoutesOwned = find(ownsRoute == 1);
                 avgRouteLength(1,playerIx) = mean(game.board.routeGraph.Edges.Length(idxOfRoutesOwned));
+                if isnan(avgRouteLength(1,playerIx))
+                    avgRouteLength(1,playerIx) = 0;
+                end
                 longestRoute(1,playerIx) = game.rules.getLongestRoute(game.board, game.players(playerIx));
  
                 % get turns per player
